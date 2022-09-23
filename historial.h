@@ -19,7 +19,7 @@ typedef struct tItem{
 struct tNode{
 tItemL data;
 tPosL next;
-};
+}
 
 typedef tPosL tList;
 

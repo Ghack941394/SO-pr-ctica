@@ -18,7 +18,6 @@ char linea[MAXLINEA];
 char ruta[MAXPATHLEN];
 
 
-
 //Función para comando autores [-l|-n]
 void funAutores(){
 
@@ -43,7 +42,12 @@ void funAutores(){
         }
 }
     
-void funPid(){};
+void funPid(){
+	if (numtrozos == 1)
+		printf("Pid de shell: %d\n", getpid());
+	else if (strcmp(trozos[1],"-p")==0)  
+		printf("Pid del padre shell: %d\n", getppid());
+}
 
 void funCarpeta(){
         if(getcwd(ruta, MAXPATHLEN)==NULL){ perror("getcwd"); exit(0);}
@@ -55,9 +59,26 @@ void funCarpeta(){
                 else
                         chdir(trozos[1]);
         }
-}; 
+} 
 
-void funFecha(){};
+void funFecha(){
+	time_t tiempo = time(0);
+	struct tm *tlocal = localtime(&tiempo);
+	char fecha[MAXFyH];
+	char hora[MAXFyH];
+
+	strftime(hora, MAXFyH, "%H:%M:%S", tlocal);
+	strftime(fecha, MAXFyH, "%d/%m/%y", tlocal);
+
+	if (numtrozos == 1){
+		printf("%s\n%s\n", hora, fecha);
+	} else {
+		if(strcmp(trozos[1], "-h")==0)
+		printf("%s\n", hora);
+		else if(strcmp(trozos[1], "-d")==0)
+		printf("%s\n", fecha);
+	}
+}
 
 void funHist(tList *listhistorial){
         int i=0, flagbal=0, n;
@@ -68,9 +89,8 @@ void funHist(tList *listhistorial){
         if(numtrozos == 1){
                 while(p!=NULL){
                         d = getItem(p,listhistorial);
-                        printf("%d->%s\n", i, *d.comando);
                         i++;
-                        p = p = next(p,*listhistorial);
+                        p = next(p,*listhistorial);
                 } 
         }
         if(numtrozos>1){
@@ -95,12 +115,15 @@ void funHist(tList *listhistorial){
                         }
                 }       
         }        
-};
+}
 
 
-void funInfosis(){};
-
-
+void funInfosis(){
+	struct utsname infosisp;
+	uname(&infosisp);
+	
+	printf("%s (%s), OS: %s-%s-%s\n", infosisp.nodename, infosisp.machine, infosisp.sysname, infosisp.release, infosisp.version);
+}
 
 
 void funAyuda(){
@@ -124,7 +147,7 @@ void funAyuda(){
 void funFin(tList *listhistorial){
         removeElement(listhistorial);
         exit(0);
-};
+}
 
 
 //Función para trocear a cadea de entrada
@@ -146,16 +169,13 @@ int main(){
         tItemL d;
 
         while(1){
-                printf("~€");
+                printf("~€ ");
                 if(fgets(linea, MAXLINEA,stdin)==NULL) {
                         exit(1);
                 }
                 //copio en d a cadea de entrada para insetar os comandos ó historial
                 strcpy(*d.comando, linea); 
                 numtrozos= TrocearCadena(linea,trozos);
-
-                for(i=0;i<numtrozos;i++)
-                        printf("trozo numero %d es [%s]\n",i,trozos[i]);
         
                 if (numtrozos==0)
                         continue;
@@ -184,5 +204,4 @@ int main(){
                         }
                 }
         }
-}
-        
+}    

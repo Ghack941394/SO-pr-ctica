@@ -21,6 +21,7 @@
 #define MAXLINEA 4096
 #define MAXTROZOS 1028
 #define MAXPATHLEN PATH_MAX
+#define MAXFyH 128
 
 void funAutores();
 void funFecha();
@@ -34,12 +35,12 @@ void funHist(tList *L);
 struct cmd {
   char *nombre;
   void (*pfun)();
-};
+}
 
 struct ax {
   char *nombre;
   char *info;
-};
+}
 
 struct cmd comandos[] = {
         {"ayuda",funAyuda}, 
@@ -49,7 +50,7 @@ struct cmd comandos[] = {
         {"infosis",funInfosis},
         {"carpeta",funCarpeta},
         {NULL,NULL},
-};
+}
 
 struct ax tabla[] = {
   {"fecha"," [-d|.h	Muestra la fecha y o la hora actual"},
@@ -63,6 +64,6 @@ struct ax tabla[] = {
   {"bye"," Termina la ejecucion del shell"},
   {"salir"," Termina la ejecucion del shell"},
   {NULL,NULL},
-};
+}
 
 

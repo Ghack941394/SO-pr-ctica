@@ -29,7 +29,6 @@ return p->data ; // a función de tipo tItemL tenque devolver tItemL
 bool createNode(tPosL* p){
 *p = malloc(sizeof(**p));
 return *p != NULL;
-
 }
 
 bool insertElement(tItemL d, tList* L){
@@ -57,5 +56,4 @@ while(*L != NULL){
 q = *L;
 *L = (*L)->next;
 free(q);}
-
 }
