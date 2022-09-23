@@ -35,12 +35,12 @@ void funHist(tList *L);
 struct cmd {
   char *nombre;
   void (*pfun)();
-}
+};
 
 struct ax {
   char *nombre;
   char *info;
-}
+};
 
 struct cmd comandos[] = {
         {"ayuda",funAyuda}, 
@@ -50,7 +50,7 @@ struct cmd comandos[] = {
         {"infosis",funInfosis},
         {"carpeta",funCarpeta},
         {NULL,NULL},
-}
+};
 
 struct ax tabla[] = {
   {"fecha"," [-d|.h	Muestra la fecha y o la hora actual"},
@@ -64,6 +64,6 @@ struct ax tabla[] = {
   {"bye"," Termina la ejecucion del shell"},
   {"salir"," Termina la ejecucion del shell"},
   {NULL,NULL},
-}
+};
 
 
