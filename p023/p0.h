@@ -15,7 +15,6 @@
 #include <dirent.h>
 #include <grp.h>
 #include <fcntl.h>
-#include "historial.h"
 
 #define DATA 32
 #define MAXLINEA 4096
@@ -36,11 +35,6 @@ struct cmd {
   void (*pfun)();
 };
 
-struct ax {
-  char *nombre;
-  char *info;
-};
-
 struct cmd comandos[] = {
         {"ayuda",funAyuda}, 
         {"fecha",funFecha},
@@ -49,20 +43,6 @@ struct cmd comandos[] = {
         {"infosis",funInfosis},
         {"carpeta",funCarpeta},
         {NULL,NULL},
-};
-
-struct ax tabla[] = {
-  {"fecha"," [-d|.h	Muestra la fecha y o la hora actual"},
-  {"autores"," [-n|-l]	Muestra los nombres y logins de las autoras"},
-  {"pid"," [-p]	Muestra el pid del shell o de su proceso padre"},
-  {"hist", " [-c|-N]	Muestra el historico de comandos, con -c lo borra"},
-  {"carpeta", " [dir] Cambia (o muestra) el directorio actual del shell"},
-  {"infosis", " Muestra informacion de la maquina donde corre el shell"},
-  {"ayuda", " [cmd]	Muestra ayuda sobre los comandos"},
-  {"fin"," Termina la ejecucion del shell"},
-  {"bye"," Termina la ejecucion del shell"},
-  {"salir"," Termina la ejecucion del shell"},
-  {NULL,NULL},
 };
 
 

@@ -8,14 +8,14 @@ login 2: graciela.mendez.olmos@udc.es
 
 */
 
-#include "p0.h"
 
-//Variables GLOBAIs para 
-//cadea recibida:
+#include "p0.h"
+#include "historial.h"
+
+
 char *trozos[MAXTROZOS];
 int numtrozos;
 char linea[MAXLINEA];
-//path 
 char ruta[MAXPATHLEN];
 
 
@@ -101,31 +101,38 @@ void funHist(tList *listhistorial){
 
 void funInfosis(){};
 
-
+struct ax tabla[] = {
+  {"fecha","[-d|.h	Muestra la fecha y o la hora actual"},
+  {"autores","[-n|-l]	Muestra los nombres y logins de las autoras"},
+  {"pid","[-p]	Muestra el pid del shell o de su proceso padre"},
+  {"hist", "[-c|-N]	Muestra el historico de comandos, con -c lo borra"},
+  {"carpeta", "[dir] Cambia (o muestra) el directorio actual del shell"},
+  {"infosis", "Muestra informacion de la maquina donde corre el shell"},
+  {"fin","Termina la ejecucion del shell"},
+  {"bye","Termina la ejecucion del shell"},
+  {"salir","Termina la ejecucion del shell"},
+  {NULL,NULL},
+};
 
 
 void funAyuda(){
-        int i, flagatopar = 0;
-        if (numtrozos>1){
-                for (i = 0; ; i++){
-                        if (strcmp(tabla[i].nombre, trozos[1])==0){
-                                printf("%s %s\n",trozos[1], tabla[i].info);
-                        break;}
-                        if (i >= 9){ flagatopar = 1; break;}
-                }
-                if (flagatopar)  printf(" '%s' no encontrado\n", trozos[1]);
-        }  
-        else{
-                printf("'ayuda cmd' donde cmd es uno de los siguientes comandos:\n");
-                printf("1.autores\n2.pid\n3.carpeta\n4.fecha\n5.hist\n");
-                printf("6.infosis\n7.fin\n8.salir\n9.bye\n10.ayuda\n");
-        }        
+        int i;
+  if (numtrozos>1){
+    for (i = 0; ; i++){
+      if (strcmp(tabla[i].nombre, trozos[1])==0){
+        printf("%s %s\n",trozos[1], aytabla[i].explicacion);
+        break;}
+       }
+      }
+    else{
+      printf("'ayuda cmd' donde cmd es uno de los siguientes comandos:\n");
+      printf("1.autores[-l|-n]\n2.pid[-p]\n3.carpeta[direct]\n4.fecha[-d|-h]\n");
+      printf("5.hist[- c|-N]\n6.infosis\n7.fin\n8.salir\n9.bye\n");
+    }
+        
 };
 
-void funFin(tList *listhistorial){
-        removeElement(listhistorial);
-        exit(0);
-};
+void funFin(tList listhistorial){};
 
 
 //Función para trocear a cadea de entrada
@@ -170,6 +177,7 @@ int main(){
                                 }
                                 else if(strcmp(trozos[0],"fin")==0||strcmp(trozos[0],"bye")==0||strcmp(trozos[0],"salir")==0){
                                         insertElement(d, &listhistorial);
+                                        break;
                                         funFin(&listhistorial);
                                 }
                                 else{
