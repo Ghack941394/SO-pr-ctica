@@ -41,7 +41,7 @@ void funAutores(){
                         printf("%s\n%s\n", nomes[0], nomes[1]);                               
         }
 }
-    
+//Función para pid [-p]
 void funPid(){
 	if (numtrozos == 1)
 		printf("Pid de shell: %d\n", getpid());
@@ -49,6 +49,7 @@ void funPid(){
 		printf("Pid del padre shell: %d\n", getppid());
 }
 
+//Función para carpeta [directorio]
 void funCarpeta(){
         if(getcwd(ruta, MAXPATHLEN)==NULL){ perror("getcwd"); exit(0);}
         if (numtrozos == 1)
@@ -61,6 +62,7 @@ void funCarpeta(){
         }
 } 
 
+//Función para fecha [-f|-h]
 void funFecha(){
 	time_t tiempo = time(0);
 	struct tm *tlocal = localtime(&tiempo);
@@ -80,6 +82,7 @@ void funFecha(){
 	}
 }
 
+//Función para historial [-h|-N]
 void funHist(tList *listhistorial){
         int i=0, flagbal=0, n;
         tItemL d;
@@ -119,6 +122,7 @@ void funHist(tList *listhistorial){
 }
 
 
+//Función para infor do sistema
 void funInfosis(){
 	struct utsname infosisp;
 	uname(&infosisp);
@@ -126,7 +130,7 @@ void funInfosis(){
 	printf("%s (%s), OS: %s-%s-%s\n", infosisp.nodename, infosisp.machine, infosisp.sysname, infosisp.release, infosisp.version);
 }
 
-
+//Función para comando ayuda [cmd]
 void funAyuda(){
         int i, flagatopar = 0;
         if (numtrozos>1){
@@ -145,10 +149,27 @@ void funAyuda(){
         }        
 };
 
+//Función para terminar execución
 void funFin(tList *listhistorial){
         removeElement(listhistorial);
         exit(0);
 }
+
+
+//////////////////////// P1     /////////////////////////////////////////////////////////////////
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 //Función para trocear a cadea de entrada
