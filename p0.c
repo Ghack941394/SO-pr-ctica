@@ -89,6 +89,7 @@ void funHist(tList *listhistorial){
         if(numtrozos == 1){
                 while(p!=NULL){
                         d = getItem(p,listhistorial);
+                        printf("%d->%s\n", i, *d.comando);
                         i++;
                         p = next(p,*listhistorial);
                 } 
@@ -170,17 +171,14 @@ int main(){
 
         while(1){
                 printf("~€ ");
-                if(fgets(linea, MAXLINEA,stdin)==NULL) {
+                if(fgets(linea, MAXLINEA,stdin)==NULL) 
                         exit(1);
-                }
                 //copio en d a cadea de entrada para insetar os comandos ó historial
                 strcpy(*d.comando, linea); 
                 numtrozos= TrocearCadena(linea,trozos);
-        
                 if (numtrozos==0)
                         continue;
                 for (i = 0; ; i++){
-
                         if(comandos[i].nombre==NULL){
                                 if (strcmp(trozos[0],"hist")==0){
                                         insertElement(d, &listhistorial);
@@ -205,3 +203,5 @@ int main(){
                 }
         }
 }    
+
+
