@@ -138,7 +138,7 @@ void funAyuda(){
                         if (strcmp(tabla[i].nombre, trozos[1])==0){
                                 printf("%s %s\n",trozos[1], tabla[i].info);
                         break;}
-                        if (i >= 9){ flagatopar = 1; break;}
+                        if (i >= 10){ flagatopar = 1; break;}
                 }
                 if (flagatopar)  printf(" '%s' no encontrado\n", trozos[1]);
         }  
@@ -146,7 +146,10 @@ void funAyuda(){
                 printf("'ayuda cmd' donde cmd es uno de los siguientes comandos:\n");
                 printf("1.autores\n2.pid\n3.carpeta\n4.fecha\n5.hist\n");
                 printf("6.infosis\n7.fin\n8.salir\n9.bye\n10.ayuda\n");
-        }        
+                printf("11.create\n");
+        } 
+        for (int j = 0; tabla[j].nombre!=NULL;j++)
+                printf("%s\n",tabla[j].nombre);       
 };
 
 //Función para terminar execución
@@ -158,9 +161,63 @@ void funFin(tList *listhistorial){
 
 //////////////////////// P1     /////////////////////////////////////////////////////////////////
 
+char LetraTF (mode_t m)
+{
+     switch (m&S_IFMT) { /*and bit a bit con los bits de formato,0170000 */
+        case S_IFSOCK: return 's'; /*socket */
+        case S_IFLNK: return 'l'; /*symbolic link*/
+        case S_IFREG: return '-'; /* fichero normal*/
+        case S_IFBLK: return 'b'; /*block device*/
+        case S_IFDIR: return 'd'; /*directorio */ 
+        case S_IFCHR: return 'c'; /*char device*/
+        case S_IFIFO: return 'p'; /*pipe*/
+        default: return '?'; /*desconocido, no deberia aparecer*/
+     }
+}
 
+char * ConvierteModo3 (mode_t m)
+{
+    char *permisos;
 
+    if ((permisos=(char *) malloc (12))==NULL)
+        return NULL;
+    strcpy (permisos,"---------- ");
+    
+    permisos[0]=LetraTF(m);
+    if (m&S_IRUSR) permisos[1]='r';    /*propietario*/
+    if (m&S_IWUSR) permisos[2]='w';
+    if (m&S_IXUSR) permisos[3]='x';
+    if (m&S_IRGRP) permisos[4]='r';    /*grupo*/
+    if (m&S_IWGRP) permisos[5]='w';
+    if (m&S_IXGRP) permisos[6]='x';
+    if (m&S_IROTH) permisos[7]='r';    /*resto*/
+    if (m&S_IWOTH) permisos[8]='w';
+    if (m&S_IXOTH) permisos[9]='x';
+    if (m&S_ISUID) permisos[3]='s';    /*setuid, setgid y stickybit*/
+    if (m&S_ISGID) permisos[6]='s';
+    if (m&S_ISVTX) permisos[9]='t';
+    
+    return permisos;
+}    
 
+//Función crear ficheiros ou directorios
+void funCreate(){
+        int fich, dir;
+        
+        if(strcmp(trozos[1],"-f")!=0){
+                if((dir=mkdir(trozos[1],0775))==-1)
+                        perror("No se ha podido crear el directorio.\n");
+                
+        }
+        else{
+                if((fich=creat(trozos[2], 0775))==-1)
+                        perror("No se ha podido crear el archivo.\n");
+        }
+}
+
+void funList(){
+
+}
 
 
 

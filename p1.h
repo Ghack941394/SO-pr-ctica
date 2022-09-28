@@ -31,6 +31,7 @@ void funInfosis();
 void funCarpeta();
 void funFin(tList *L);
 void funHist(tList *L);
+void funCreate();
 
 struct cmd {
   char *nombre;
@@ -49,6 +50,7 @@ struct cmd comandos[] = {
         {"pid",funPid},
         {"infosis",funInfosis},
         {"carpeta",funCarpeta},
+        {"create",funCreate},
         {NULL,NULL},
 };
 
@@ -63,6 +65,7 @@ struct ax tabla[] = {
   {"fin"," Termina la ejecucion del shell"},
   {"bye"," Termina la ejecucion del shell"},
   {"salir"," Termina la ejecucion del shell"},
+  {"create"," [-f] [name]    Crea un directorio o un fichero (-f)"},
   {NULL,NULL},
 };
 
