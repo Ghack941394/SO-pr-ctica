@@ -20,7 +20,6 @@
 #define DATA 32
 #define MAXLINEA 4096
 #define MAXTROZOS 1028
-#define MAXPATHLEN PATH_MAX
 #define MAXFyH 128
 
 void funAutores();

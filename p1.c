@@ -15,7 +15,7 @@ char *trozos[MAXTROZOS];
 int numtrozos;
 char linea[MAXLINEA];
 //path 
-char ruta[MAXPATHLEN];
+char ruta[PATH_MAX];
 
 
 //Función para comando autores [-l|-n]
@@ -51,14 +51,13 @@ void funPid(){
 
 //Función para carpeta [directorio]
 void funCarpeta(){
-        if(getcwd(ruta, MAXPATHLEN)==NULL){ perror("getcwd"); exit(0);}
+        if(getcwd(ruta, MAXPATHLEN)==NULL)
+                fprintf(stderr, "%s '%s'\n", strerror(errno),trozos[1] );        
         if (numtrozos == 1)
                 printf("El directorio actual es: %s\n", ruta);
         if(numtrozos > 1){
-                if(chdir(trozos[1])==-1)
+                if(chdir(trozos[1]) != 0)
                         fprintf(stderr, " %s '%s'\n", strerror(2), trozos[1]);
-                else
-                        chdir(trozos[1]);
         }
 } 
 
