@@ -138,7 +138,7 @@ void funAyuda(){
                         if (strcmp(tabla[i].nombre, trozos[1])==0){
                                 printf("%s %s\n",trozos[1], tabla[i].info);
                         break;}
-                        if (i >= 10){ flagatopar = 1; break;}
+                        if (i >= 12){ flagatopar = 1; break;}
                 }
                 if (flagatopar)  printf(" '%s' no encontrado\n", trozos[1]);
         }  
@@ -146,10 +146,10 @@ void funAyuda(){
                 printf("'ayuda cmd' donde cmd es uno de los siguientes comandos:\n");
                 printf("1.autores\n2.pid\n3.carpeta\n4.fecha\n5.hist\n");
                 printf("6.infosis\n7.fin\n8.salir\n9.bye\n10.ayuda\n");
-                printf("11.create\n");
+                printf("11.create\n12.stat\n13.list\n14.delete\n15.deltree\n");
         } 
-        for (int j = 0; tabla[j].nombre!=NULL;j++)
-                printf("%s\n",tabla[j].nombre);       
+        /*for (int j = 0; tabla[j].nombre!=NULL;j++)
+                printf("%s\n",tabla[j].nombre);   */    
 };
 
 //Función para terminar execución
@@ -216,7 +216,7 @@ void funCreate(){
 }
 
 void funList(){
-int flagreca=0, flagrecb=0, flaghid=0, flaglong=0, flaglink=0, flagacc=0
+int flagreca=0, flagrecb=0, flaghid=0, flaglong=0, flaglink=0, flagacc=0;
 
         //se é 1 ou non le, dir act?
   DIR *d;
@@ -231,21 +231,20 @@ int flagreca=0, flagrecb=0, flaghid=0, flaglong=0, flaglink=0, flagacc=0
   char *modo, fecha[DATA], *feca, *fecm, enlace[PATH_MAX], enlace2[PATH_MAX]; 
   
   for (i = 1; i< numtrozos && trozos[i][0] == '-' ; i++){
-    if(strcmp(trozos[k], "-long")==0)
+    if(strcmp(trozos[1], "-long")==0)
       flaglong = 1;
-    if(strcmp(trozos[k], "-link")==0) 
+    if(strcmp(trozos[1], "-link")==0) 
       flaglink = 1;
-    if(strcmp(trozos[k], "-acc")==0)
+    if(strcmp(trozos[1], "-acc")==0)
       flagacc = 1;
-    if(strcmp(trozos[k], "-hid")==0)
+    if(strcmp(trozos[1], "-hid")==0)
       flaghid = 1;
-    if(strcmp(trozos[k], "-reca")==0) 
+    if(strcmp(trozos[1], "-reca")==0) 
       flagreca = 1;
-    if(strcmp(trozos[k], "-recb")==0)
+    if(strcmp(trozos[1], "-recb")==0)
       flagrecb = 1;
    }
    
-   if
   
   /*for(p=i; p<numtrozos; p++ ){
     if(strcmp(trozos[p],nom)==0){
@@ -297,13 +296,54 @@ int flagreca=0, flagrecb=0, flaghid=0, flaglong=0, flaglink=0, flagacc=0
 }
 
 
+void funDelete(){
+        int i;
+        for(i = 1; i<numtrozos; i++){
+                if(remove(trozos[i]) != 0)
+                        fprintf(stderr, "%s '%s'\n", strerror(errno),trozos[i] ); //devolve error se o directorio está baleiro ou non tes permiso.
+        }
+        if (numtrozos == 1)
+                funCarpeta();     
+}
 
+//Función auxiliar para borrar recursivamente un directorio non baleiro
+void funAuxDelRec(char* directorio){                                        
+        DIR * dir;
+        struct dirent *d;
+        char direccion[PATH_MAX];
+                if((dir = opendir(directorio))!=NULL){ //Se podemos abrilo
+                        //lemos en bucle as entradas do directorio
+                        while((d = readdir(dir))!=NULL){
+                                //collemos a dirección de cada entrada
+                                strcpy(direccion,directorio);
+                                strcat(direccion,"/");
+                                strcat(direccion, d->d_name);
+                                //Se é distinto ao directorio pai oi el mesmo
+                                if ((strcmp(d->d_name,"..") != 0) && (strcmp(d->d_name,".") !=0)){
+                                        if(d->d_type == DT_DIR)   //se é un directorio                                 
+                                                funAuxDelRec(direccion);             
+                                        else {                                   
+                                                if(remove(direccion) != 0)
+                                                        fprintf(stderr, "%s '%s'\n", strerror(errno), direccion );
+                                        }                                        
+                                }
+                        } //para borrar o directorio actual
+                        if(remove(directorio) != 0) 
+                                fprintf(stderr, "%s '%s'\n", strerror(errno), direccion );
+                }
+                else
+                    fprintf(stderr, "%s '%s'\n", strerror(errno), direccion );    
+}
 
-
-
-
-
-
+void funDeltree(){
+        int i;
+        for(i = 1; i<numtrozos; i++){
+                if(remove(trozos[i]) != 0)
+                        funAuxDelRec(trozos[i]);
+        }
+        if(numtrozos == 1)
+                funCarpeta();
+}
 
 
 //Función para trocear a cadea de entrada
