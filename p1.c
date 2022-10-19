@@ -137,7 +137,7 @@ void funAyuda(){
                         if (strcmp(tabla[i].nombre, trozos[1])==0){
                                 printf("%s %s\n",trozos[1], tabla[i].info);
                         break;}
-                        if (i >= 12){ flagatopar = 1; break;}
+                        if (i >= 13){ flagatopar = 1; break;}
                 }
                 if (flagatopar)  printf(" '%s' no encontrado\n", trozos[1]);
         }  
@@ -223,8 +223,10 @@ char *link = malloc(sizeof(char)*PATH_MAX);
 char *apunta_a = malloc(sizeof(char)*PATH_MAX);
 
 //Leo o arquivo con stat, e por se é simbólico  lstat
-if (lstat(f, &buffer)==-1)
+if (lstat(f, &buf)==-1){
         fprintf(stderr, "%s '%s'\n", strerror(errno), f);
+        return;
+}
 
 
 time = localtime(&buf.st_mtime);
@@ -236,14 +238,14 @@ strftime(buffer, sizeof(buffer), "%Y/%m/%d-%H:%M", time);
 p = getpwuid(buf.st_uid);
 
 if(p == NULL)
-        fprintf(stderr, "%s '%s'\n", strerror(errno), p);
+        perror("Error: pwd");
 
 g = getgrgid(buf.st_gid);
 
 if (g == NULL)
-        fprintf(stderr, "%s '%s'\n", strerror(errno), g);
+        perror("Error: group");
 //Se quero máis información        
-if (Long){
+if (Long || Acc){
         ConvierteModo(buf.st_mode, permisos);
         printf("%s", buffer);
         printf("    %ld ( %ld)   %s   %s   %s", buf.st_nlink, buf.st_ino, p->pw_name, g->gr_name, permisos);
@@ -259,6 +261,8 @@ if (Link){
                 fprintf(stderr, "%s '%s'\n", strerror(errno), f);
         printf(" -> %s", apunta_a);
 }
+printf("\n");
+
 free(permisos);
 free(link);
 free(apunta_a);
@@ -268,29 +272,35 @@ free(apunta_a);
 void funList(){
 int flagreca=0, flagrecb=0, flaghid=0, flaglong=0, flaglink=0, flagacc=0;
 int i,j=0;
-char ficheiros[PATH_MAX];
-  
+tList ficheiros;
+createList(&ficheiros);
+tItemL d;
+tPosL p ;
+
 for (i = 1; i< numtrozos ; i++){
-        if(strcmp(trozos[1], "-long")==0)
+        if(strcmp(trozos[i], "-long")==0){
                 flaglong = 1;
-        else if(strcmp(trozos[1], "-link")==0) 
+        }else if(strcmp(trozos[i], "-link")==0){
                 flaglink = 1;
-        else if(strcmp(trozos[1], "-acc")==0)
+        }else if(strcmp(trozos[i], "-acc")==0){
                 flagacc = 1;
-        else if(strcmp(trozos[1], "-hid")==0)
+        }else if(strcmp(trozos[i], "-hid")==0){
                 flaghid = 1;
-        else if(strcmp(trozos[1], "-reca")==0) 
+        }else if(strcmp(trozos[i], "-reca")==0){ 
                 flagreca = 1;
-        else if(strcmp(trozos[1], "-recb")==0)
+        }else if(strcmp(trozos[i], "-recb")==0){
                 flagrecb = 1;
-        else{
-                ficheiros[j] = trozos[i];
-                j++;
+        }else{
+                strcpy(*d.comando, trozos[i]);
+                insertElement(d, &ficheiros);
         }
 }
-   
-        
-
+p =  first(ficheiros);
+while (p!=NULL){ 
+        d = getItem(p,&ficheiros);
+        funStatAux(*d.comando, flagacc, flaglink, flaglong); 
+        p = next(p,ficheiros);
+}
 }
 
 
