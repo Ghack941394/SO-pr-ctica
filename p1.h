@@ -31,6 +31,7 @@ void funCarpeta();
 void funFin(tList *L);
 void funHist(tList *L);
 void funCreate();
+void funList();
 void funStat();
 void funDelete();
 void funDeltree();
@@ -53,6 +54,7 @@ struct cmd comandos[] = {
         {"infosis",funInfosis},
         {"carpeta",funCarpeta},
         {"create",funCreate},
+        {"list", funList},
         {"stat",funStat},
         {"delete",funDelete},
         {"deltree", funDeltree},
@@ -71,6 +73,7 @@ struct ax tabla[] = {
   {"bye"," Termina la ejecucion del shell"},
   {"salir"," Termina la ejecucion del shell"},
   {"create"," [-f] [name]    Crea un directorio o un fichero (-f)"},
+  {"list", " [-reca] [-recb] [-hid][-long][-link][-acc] n1 n2 ..	lista contenidos de directorios\n-hid: incluye los ficheros ocultos\n-reca: recursivo (antes)\n-recb: recursivo (despues)\nresto parametros como stat"},
   {"delete", " [name1 name2 ..] Borra ficheros o directorios vacios"},
   {"deltree", " [name1 name2 ..] Borra ficheros o directorios no vacios recursivamente"},
   {NULL,NULL},

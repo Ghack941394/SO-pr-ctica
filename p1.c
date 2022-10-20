@@ -51,7 +51,7 @@ void funPid(){
 
 //Función para carpeta [directorio]
 void funCarpeta(){
-        if(getcwd(ruta, MAXPATHLEN)==NULL)
+        if(getcwd(ruta, PATH_MAX)==NULL)
                 fprintf(stderr, "%s '%s'\n", strerror(errno),trozos[1] );        
         if (numtrozos == 1)
                 printf("El directorio actual es: %s\n", ruta);
@@ -137,7 +137,7 @@ void funAyuda(){
                         if (strcmp(tabla[i].nombre, trozos[1])==0){
                                 printf("%s %s\n",trozos[1], tabla[i].info);
                         break;}
-                        if (i >= 12){ flagatopar = 1; break;}
+                        if (i >= 13){ flagatopar = 1; break;}
                 }
                 if (flagatopar)  printf(" '%s' no encontrado\n", trozos[1]);
         }  
@@ -370,6 +370,30 @@ free(apunta_a);
 //         */
         
 
+for (i = 1; i< numtrozos ; i++){
+        if(strcmp(trozos[i], "-long")==0){
+                flaglong = 1;
+        }else if(strcmp(trozos[i], "-link")==0){
+                flaglink = 1;
+        }else if(strcmp(trozos[i], "-acc")==0){
+                flagacc = 1;
+        }else if(strcmp(trozos[i], "-hid")==0){
+                flaghid = 1;
+        }else if(strcmp(trozos[i], "-reca")==0){ 
+                flagreca = 1;
+        }else if(strcmp(trozos[i], "-recb")==0){
+                flagrecb = 1;
+        }else{
+                strcpy(*d.comando, trozos[i]);
+                insertElement(d, &ficheiros);
+        }
+}
+p =  first(ficheiros);
+while (p!=NULL){ 
+        d = getItem(p,&ficheiros);
+        funStatAux(*d.comando, flagacc, flaglink, flaglong); 
+        p = next(p,ficheiros);
+}
 // }
 
 
