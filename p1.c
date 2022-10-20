@@ -211,13 +211,13 @@ void funCreate(){
 
 void funStat(){
         int flagAcc = 0, flagLink = 0, flagLong = 0;
-        char *fileORdir[PATH_MAX];
-        char aux; 
+        // char *fileORdir[PATH_MAX];
+        char *fileORdir[NAME_MAX];
+        int i = 0;
 
         for (int k = 1; k < numtrozos; k++){
                 
                 if(strcmp(trozos[k], "-long")==0){
-                        printf("hola");
                         flagLong = 1;
                 }
                 else if (strcmp(trozos[k], "-link")==0) 
@@ -225,74 +225,77 @@ void funStat(){
                 else if (strcmp(trozos[k], "-acc")==0)
                         flagAcc = 1;
                 else {
-                        printf("hola2\n");
-                        printf("%s\n", trozos[k]);
-                        strcpy(fileORdir, trozos);
-                        //fprintf("%s", fileORdir[k]);   ARREGLAR
-                }  
-                                
+                        fileORdir[i] = trozos[k];
+                        i++;
+                }                  
         }
-        for(int i = 0; fileORdir[i] != NULL; i++)
-                funStatAux(fileORdir[i], flagAcc, flagLink, flagLong);
+        
+        for(int j=0; j < i ; j++){
+                funStatAux(fileORdir[j], flagAcc, flagLink, flagLong);
+        }
+
 }
         
  
-
-void funStatAux(char *f, int Acc, int Link, int Long){
-
+void funStatAux(char *name, int Acc, int Link, int Long){
+        char *apunta_a;
+        char *permisos=malloc(sizeof(char)*PATH_MAX);
         char buffer[PATH_MAX];
         struct tm *time ;
         struct stat buf;
         struct passwd *p;
         struct group *g;
-        char *permisos=malloc(sizeof(char)*PATH_MAX);
-        char *link = malloc(sizeof(char)*PATH_MAX);
-        char *apunta_a = malloc(sizeof(char)*PATH_MAX);
+        ssize_t bufsiz, nbytes;
 
-//Leo o arquivo con stat, e por se é simbólico  lstat
-        if (lstat(f, &buffer)==-1)
-                fprintf(stderr, "%s '%s'\n", strerror(errno), f);
+        //Leo o arquivo con stat, e por se é simbólico  lstat
+        if(lstat(name, &buf) == 0){
+                time = localtime(&buf.st_mtime); //ultima modificacion 
+
+                if(Acc){
+                        time = localtime(&buf.st_atime);//ultimo acceso
+                        strftime(buffer, sizeof(buffer), "%Y/%m/%d-%H:%M", time); 
+
+                        if(!(Long) && !(Link)){
+                                printf("%s" , buffer);
+                        }
+                }
+                strftime(buffer, sizeof(buffer), "%Y/%m/%d-%H:%M", time); 
+
+                p = getpwuid(buf.st_uid); //id del usuario propietario
+                g = getgrgid(buf.st_gid); //id del grupo propietario
+                
+                if(p == NULL ||  g == NULL){
+                        perror("Error: pxd");
+                }
+
+                if ((Long && Acc) || Long){
+                        ConvierteModo(buf.st_mode, permisos);
+                        printf("%s" , buffer);
+                        printf("   %ld (%ld)     %s     %s   %s", buf.st_nlink, buf.st_ino, p->pw_name, g->gr_name, permisos);
+                        free(permisos);
+                }
+                printf("       %ld %s\n", buf.st_size, name);
+                
+                if(Link){
+                        bufsiz = buf.st_size;
+                        apunta_a = malloc(bufsiz);
+                        nbytes = readlink(name, apunta_a, bufsiz); 
+                        if (nbytes == -1){
+                                fprintf(stderr, "%s '%s' for option -link\n", strerror(errno), name);
         
-        time = localtime(&buf.st_mtime); //ultima modificacion 
-        
-        if (Acc)
-                time = localtime(&buf.st_atime);//ultimo acceso
-
-        p = getpwuid(buf.st_uid); //id del usuario propietario
-        g = getgrgid(buf.st_gid); //id del grupo propietario
-
-        if(p == NULL)
-                fprintf(stderr, "%s '%s'\n", strerror(errno), p);
-        if (g == NULL)
-                fprintf(stderr, "%s '%s'\n", strerror(errno), g);
-       
-        strftime(buffer, sizeof(buffer), "%Y/%m/%d-%H:%M", time); 
-        
-        //Se quero máis información
-        if (Long){
-                ConvierteModo(buf.st_mode, permisos);
-                printf("%s\n" , buffer);
-                printf("    %ld ( %ld)   %s   %s   %s\n", buf.st_nlink, buf.st_ino, p->pw_name, g->gr_name, permisos);
-}
-        //Imprimimos o tamaño e o nome  sempre  e no final
-        printf("       %ld %s\n", buf.st_size, f);
-
-        //Se é link simbólico imprimimos a que apunta
-        if (Link){
-                if (readlink(f, link, sizeof(link)-1) == -1)
-                        fprintf(stderr, "%s '%s'\n", strerror(errno), f);
-                if(realpath(link,apunta_a) == NULL)
-                        fprintf(stderr, "%s '%s'\n", strerror(errno), f);
-        printf(" -> %s\n", apunta_a);
-}
-free(permisos);
-free(link);
-free(apunta_a);
+                        } else {
+                                 printf(" -> %s\n", apunta_a);   
+                        } 
+                        free(apunta_a);
+                }
+        } else {
+                fprintf(stderr, "%s '%s'\n", strerror(errno), name);
+        }
+        // printf("\n");
 }
 
 
-
-// void funList(){
+void funList(){
 // int flagreca=0, flagrecb=0, flaghid=0, flaglong=0, flaglink=0, flagacc=0;
 
 //         //se é 1 ou non le, dir act?
@@ -370,31 +373,31 @@ free(apunta_a);
 //         */
         
 
-for (i = 1; i< numtrozos ; i++){
-        if(strcmp(trozos[i], "-long")==0){
-                flaglong = 1;
-        }else if(strcmp(trozos[i], "-link")==0){
-                flaglink = 1;
-        }else if(strcmp(trozos[i], "-acc")==0){
-                flagacc = 1;
-        }else if(strcmp(trozos[i], "-hid")==0){
-                flaghid = 1;
-        }else if(strcmp(trozos[i], "-reca")==0){ 
-                flagreca = 1;
-        }else if(strcmp(trozos[i], "-recb")==0){
-                flagrecb = 1;
-        }else{
-                strcpy(*d.comando, trozos[i]);
-                insertElement(d, &ficheiros);
-        }
-}
-p =  first(ficheiros);
-while (p!=NULL){ 
-        d = getItem(p,&ficheiros);
-        funStatAux(*d.comando, flagacc, flaglink, flaglong); 
-        p = next(p,ficheiros);
-}
+// for (i = 1; i< numtrozos ; i++){
+//         if(strcmp(trozos[i], "-long")==0){
+//                 flaglong = 1;
+//         }else if(strcmp(trozos[i], "-link")==0){
+//                 flaglink = 1;
+//         }else if(strcmp(trozos[i], "-acc")==0){
+//                 flagacc = 1;
+//         }else if(strcmp(trozos[i], "-hid")==0){
+//                 flaghid = 1;
+//         }else if(strcmp(trozos[i], "-reca")==0){ 
+//                 flagreca = 1;
+//         }else if(strcmp(trozos[i], "-recb")==0){
+//                 flagrecb = 1;
+//         }else{
+//                 strcpy(*d.comando, trozos[i]);
+//                 insertElement(d, &ficheiros);
+//         }
 // }
+// p =  first(ficheiros);
+// while (p!=NULL){ 
+//         d = getItem(p,&ficheiros);
+//         funStatAux(*d.comando, flagacc, flaglink, flaglong); 
+//         p = next(p,ficheiros);
+// }
+}
 
 
 void funDelete(){
@@ -466,7 +469,7 @@ int main(){
         tItemL d;
 
         while(1){
-                printf("~€ ");
+                printf("-> ");
                 if(fgets(linea, MAXLINEA,stdin)==NULL) 
                         exit(1);
                 //copio en d a cadea de entrada para insetar os comandos ó historial
