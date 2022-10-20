@@ -31,6 +31,7 @@ void funCarpeta();
 void funFin(tList *L);
 void funHist(tList *L);
 void funCreate();
+void funStat();
 void funDelete();
 void funDeltree();
 
@@ -52,6 +53,7 @@ struct cmd comandos[] = {
         {"infosis",funInfosis},
         {"carpeta",funCarpeta},
         {"create",funCreate},
+        {"stat",funStat},
         {"delete",funDelete},
         {"deltree", funDeltree},
         {NULL,NULL},

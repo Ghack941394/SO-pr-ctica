@@ -158,7 +158,7 @@ void funFin(tList *listhistorial){
 }
 
 
-//////////////////////// P1     /////////////////////////////////////////////////////////////////
+//////////////////////////////////// P1 ///////////////////////////////////////////
 
 char LetraTF (mode_t m)
 {
@@ -174,12 +174,8 @@ char LetraTF (mode_t m)
      }
 }
 
-char * ConvierteModo3 (mode_t m)
+char * ConvierteModo (mode_t m, char *permisos)
 {
-    char *permisos;
-
-    if ((permisos=(char *) malloc (12))==NULL)
-        return NULL;
     strcpy (permisos,"---------- ");
     
     permisos[0]=LetraTF(m);
@@ -197,7 +193,7 @@ char * ConvierteModo3 (mode_t m)
     if (m&S_ISVTX) permisos[9]='t';
     
     return permisos;
-}    
+}  
 
 //Función crear ficheiros ou directorios
 void funCreate(){
@@ -207,92 +203,174 @@ void funCreate(){
                 if((dir=mkdir(trozos[1],0775))==-1)
                         perror("No se ha podido crear el directorio.\n");
                 
-        }
-        else{
+        } else{
                 if((fich=creat(trozos[2], 0775))==-1)
                         perror("No se ha podido crear el archivo.\n");
         }
 }
 
-void funList(){
-int flagreca=0, flagrecb=0, flaghid=0, flaglong=0, flaglink=0, flagacc=0;
+void funStat(){
+        int flagAcc = 0, flagLink = 0, flagLong = 0;
+        char *fileORdir[PATH_MAX];
+        char aux; 
 
-        //se é 1 ou non le, dir act?
-  DIR *d;
-  struct dirent *de;
-  struct stat sb;
-  struct group *grp;
-  struct passwd *prop;
+        for (int k = 1; k < numtrozos; k++){
+                
+                if(strcmp(trozos[k], "-long")==0){
+                        printf("hola");
+                        flagLong = 1;
+                }
+                else if (strcmp(trozos[k], "-link")==0) 
+                        flagLink = 1;
+                else if (strcmp(trozos[k], "-acc")==0)
+                        flagAcc = 1;
+                else {
+                        printf("hola2\n");
+                        printf("%s\n", trozos[k]);
+                        strcpy(fileORdir, trozos);
+                        //fprintf("%s", fileORdir[k]);   ARREGLAR
+                }  
+                                
+        }
+        for(int i = 0; fileORdir[i] != NULL; i++)
+                funStatAux(fileORdir[i], flagAcc, flagLink, flagLong);
+}
+        
+ 
+
+void funStatAux(char *f, int Acc, int Link, int Long){
+
+        char buffer[PATH_MAX];
+        struct tm *time ;
+        struct stat buf;
+        struct passwd *p;
+        struct group *g;
+        char *permisos=malloc(sizeof(char)*PATH_MAX);
+        char *link = malloc(sizeof(char)*PATH_MAX);
+        char *apunta_a = malloc(sizeof(char)*PATH_MAX);
+
+//Leo o arquivo con stat, e por se é simbólico  lstat
+        if (lstat(f, &buffer)==-1)
+                fprintf(stderr, "%s '%s'\n", strerror(errno), f);
+        
+        time = localtime(&buf.st_mtime); //ultima modificacion 
+        
+        if (Acc)
+                time = localtime(&buf.st_atime);//ultimo acceso
+
+        p = getpwuid(buf.st_uid); //id del usuario propietario
+        g = getgrgid(buf.st_gid); //id del grupo propietario
+
+        if(p == NULL)
+                fprintf(stderr, "%s '%s'\n", strerror(errno), p);
+        if (g == NULL)
+                fprintf(stderr, "%s '%s'\n", strerror(errno), g);
+       
+        strftime(buffer, sizeof(buffer), "%Y/%m/%d-%H:%M", time); 
+        
+        //Se quero máis información
+        if (Long){
+                ConvierteModo(buf.st_mode, permisos);
+                printf("%s\n" , buffer);
+                printf("    %ld ( %ld)   %s   %s   %s\n", buf.st_nlink, buf.st_ino, p->pw_name, g->gr_name, permisos);
+}
+        //Imprimimos o tamaño e o nome  sempre  e no final
+        printf("       %ld %s\n", buf.st_size, f);
+
+        //Se é link simbólico imprimimos a que apunta
+        if (Link){
+                if (readlink(f, link, sizeof(link)-1) == -1)
+                        fprintf(stderr, "%s '%s'\n", strerror(errno), f);
+                if(realpath(link,apunta_a) == NULL)
+                        fprintf(stderr, "%s '%s'\n", strerror(errno), f);
+        printf(" -> %s\n", apunta_a);
+}
+free(permisos);
+free(link);
+free(apunta_a);
+}
+
+
+
+// void funList(){
+// int flagreca=0, flagrecb=0, flaghid=0, flaglong=0, flaglink=0, flagacc=0;
+
+//         //se é 1 ou non le, dir act?
+//   DIR *d;
+//   struct dirent *de;
+//   struct stat sb;
+//   struct group *grp;
+//   struct passwd *prop;
   
-  int i;
+//   int i;
   
-  char name[MAXTROZOS], paux[PATH_MAX], paux1[PATH_MAX*2];
-  char *modo, fecha[DATA], *feca, *fecm, enlace[PATH_MAX], enlace2[PATH_MAX]; 
+//   char name[MAXTROZOS], paux[PATH_MAX], paux1[PATH_MAX*2];
+//   char *modo, fecha[DATA], *feca, *fecm, enlace[PATH_MAX], enlace2[PATH_MAX]; 
   
-  for (i = 1; i< numtrozos && trozos[i][0] == '-' ; i++){
-    if(strcmp(trozos[1], "-long")==0)
-      flaglong = 1;
-    if(strcmp(trozos[1], "-link")==0) 
-      flaglink = 1;
-    if(strcmp(trozos[1], "-acc")==0)
-      flagacc = 1;
-    if(strcmp(trozos[1], "-hid")==0)
-      flaghid = 1;
-    if(strcmp(trozos[1], "-reca")==0) 
-      flagreca = 1;
-    if(strcmp(trozos[1], "-recb")==0)
-      flagrecb = 1;
-   }
+//   for (i = 1; i< numtrozos && trozos[i][0] == '-' ; i++){
+//     if(strcmp(trozos[1], "-long")==0)
+//       flaglong = 1;
+//     if(strcmp(trozos[1], "-link")==0) 
+//       flaglink = 1;
+//     if(strcmp(trozos[1], "-acc")==0)
+//       flagacc = 1;
+//     if(strcmp(trozos[1], "-hid")==0)
+//       flaghid = 1;
+//     if(strcmp(trozos[1], "-reca")==0) 
+//       flagreca = 1;
+//     if(strcmp(trozos[1], "-recb")==0)
+//       flagrecb = 1;
+//    }
    
   
-  /*for(p=i; p<numtrozos; p++ ){
-    if(strcmp(trozos[p],nom)==0){
-      d = opendir(trozos[p]);
-      strcpy(name,strcat(strcpy(name,"/"), trozos[p]));
-      strcpy(paux, strcat(strcpy(paux, ruta), name));
-      }
-    else{
-      d = opendir(nom);
-      strcpy(name,strcat(strcpy(name,"/"), nom));
-      strcpy(paux, strcat(paux, name));
-      }
-    printf("%d\n",i);
-    if(d==NULL){
-      if(stat(paux,&sb) == -1)
-        fprintf(stderr, "****error al acceder a %s: %s\n", nom, strerror(errno));
-      else
-      	if(LetraTF(sb.st_mode)!= 'd')
-      	 cmdListfich();
-      return; //continue;
-    }
+//   /*for(p=i; p<numtrozos; p++ ){
+//     if(strcmp(trozos[p],nom)==0){
+//       d = opendir(trozos[p]);
+//       strcpy(name,strcat(strcpy(name,"/"), trozos[p]));
+//       strcpy(paux, strcat(strcpy(paux, ruta), name));
+//       }
+//     else{
+//       d = opendir(nom);
+//       strcpy(name,strcat(strcpy(name,"/"), nom));
+//       strcpy(paux, strcat(paux, name));
+//       }
+//     printf("%d\n",i);
+//     if(d==NULL){
+//       if(stat(paux,&sb) == -1)
+//         fprintf(stderr, "****error al acceder a %s: %s\n", nom, strerror(errno));
+//       else
+//       	if(LetraTF(sb.st_mode)!= 'd')
+//       	 cmdListfich();
+//       return; //continue;
+//     }
     
-    printf("************%s\n",nom);
+//     printf("************%s\n",nom);
     
-    strcpy(paux,strcat(paux,"/"));
+//     strcpy(paux,strcat(paux,"/"));
     
-    while( (de = readdir(d)) != NULL ) {
+//     while( (de = readdir(d)) != NULL ) {
       
-      sprintf(paux1,"%s/%s", paux, de->d_name);
+//       sprintf(paux1,"%s/%s", paux, de->d_name);
   
-      if(stat(paux1, &sb) == -1){
-        perror("stat");
-        continue;
-      }
+//       if(stat(paux1, &sb) == -1){
+//         perror("stat");
+//         continue;
+//       }
       
-      l = i;
-      modo = ConvierteModo(sb.st_mode);
-      fecm = data(fecha, sb.st_mtime);
-      feca = data(fecha, sb.st_atime);
-      grp = getgrgid(sb.st_gid);
-      prop = getpwuid(sb.st_uid);
-      if(grp == NULL)
-        perror("grupo");
-      if(prop == NULL)
-        perror("usuario");
-        */
+//       l = i;
+//       modo = ConvierteModo(sb.st_mode);
+//       fecm = data(fecha, sb.st_mtime);
+//       feca = data(fecha, sb.st_atime);
+//       grp = getgrgid(sb.st_gid);
+//       prop = getpwuid(sb.st_uid);
+//       if(grp == NULL)
+//         perror("grupo");
+//       if(prop == NULL)
+//         perror("usuario");
+//         */
         
 
-}
+// }
 
 
 void funDelete(){
