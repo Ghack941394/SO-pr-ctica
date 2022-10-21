@@ -207,35 +207,7 @@ void funCreate(){
                 if((fich=creat(trozos[2], 0775))==-1)
                         perror("No se ha podido crear el archivo.\n");
         }
-}
-
-void funStat(){
-        int flagAcc = 0, flagLink = 0, flagLong = 0;
-        // char *fileORdir[PATH_MAX];
-        char *fileORdir[NAME_MAX];
-        int i = 0;
-
-        for (int k = 1; k < numtrozos; k++){
-                
-                if(strcmp(trozos[k], "-long")==0){
-                        flagLong = 1;
-                }
-                else if (strcmp(trozos[k], "-link")==0) 
-                        flagLink = 1;
-                else if (strcmp(trozos[k], "-acc")==0)
-                        flagAcc = 1;
-                else {
-                        fileORdir[i] = trozos[k];
-                        i++;
-                }                  
-        }
-        
-        for(int j=0; j < i ; j++){
-                funStatAux(fileORdir[j], flagAcc, flagLink, flagLong);
-        }
-
-}
-        
+}       
  
 void funStatAux(char *name, int Acc, int Link, int Long){
         char *apunta_a;
@@ -294,111 +266,71 @@ void funStatAux(char *name, int Acc, int Link, int Long){
         // printf("\n");
 }
 
+void funStat(){
+        int flagAcc = 0, flagLink = 0, flagLong = 0;
+        tList ficheiros;
+        createList(&ficheiros);
+        tItemL d;
+        tPosL p ;
+        int i = 0;
 
-void funList(){
-// int flagreca=0, flagrecb=0, flaghid=0, flaglong=0, flaglink=0, flagacc=0;
-
-//         //se é 1 ou non le, dir act?
-//   DIR *d;
-//   struct dirent *de;
-//   struct stat sb;
-//   struct group *grp;
-//   struct passwd *prop;
-  
-//   int i;
-  
-//   char name[MAXTROZOS], paux[PATH_MAX], paux1[PATH_MAX*2];
-//   char *modo, fecha[DATA], *feca, *fecm, enlace[PATH_MAX], enlace2[PATH_MAX]; 
-  
-//   for (i = 1; i< numtrozos && trozos[i][0] == '-' ; i++){
-//     if(strcmp(trozos[1], "-long")==0)
-//       flaglong = 1;
-//     if(strcmp(trozos[1], "-link")==0) 
-//       flaglink = 1;
-//     if(strcmp(trozos[1], "-acc")==0)
-//       flagacc = 1;
-//     if(strcmp(trozos[1], "-hid")==0)
-//       flaghid = 1;
-//     if(strcmp(trozos[1], "-reca")==0) 
-//       flagreca = 1;
-//     if(strcmp(trozos[1], "-recb")==0)
-//       flagrecb = 1;
-//    }
-   
-  
-//   /*for(p=i; p<numtrozos; p++ ){
-//     if(strcmp(trozos[p],nom)==0){
-//       d = opendir(trozos[p]);
-//       strcpy(name,strcat(strcpy(name,"/"), trozos[p]));
-//       strcpy(paux, strcat(strcpy(paux, ruta), name));
-//       }
-//     else{
-//       d = opendir(nom);
-//       strcpy(name,strcat(strcpy(name,"/"), nom));
-//       strcpy(paux, strcat(paux, name));
-//       }
-//     printf("%d\n",i);
-//     if(d==NULL){
-//       if(stat(paux,&sb) == -1)
-//         fprintf(stderr, "****error al acceder a %s: %s\n", nom, strerror(errno));
-//       else
-//       	if(LetraTF(sb.st_mode)!= 'd')
-//       	 cmdListfich();
-//       return; //continue;
-//     }
-    
-//     printf("************%s\n",nom);
-    
-//     strcpy(paux,strcat(paux,"/"));
-    
-//     while( (de = readdir(d)) != NULL ) {
-      
-//       sprintf(paux1,"%s/%s", paux, de->d_name);
-  
-//       if(stat(paux1, &sb) == -1){
-//         perror("stat");
-//         continue;
-//       }
-      
-//       l = i;
-//       modo = ConvierteModo(sb.st_mode);
-//       fecm = data(fecha, sb.st_mtime);
-//       feca = data(fecha, sb.st_atime);
-//       grp = getgrgid(sb.st_gid);
-//       prop = getpwuid(sb.st_uid);
-//       if(grp == NULL)
-//         perror("grupo");
-//       if(prop == NULL)
-//         perror("usuario");
-//         */
-        
-
-// for (i = 1; i< numtrozos ; i++){
-//         if(strcmp(trozos[i], "-long")==0){
-//                 flaglong = 1;
-//         }else if(strcmp(trozos[i], "-link")==0){
-//                 flaglink = 1;
-//         }else if(strcmp(trozos[i], "-acc")==0){
-//                 flagacc = 1;
-//         }else if(strcmp(trozos[i], "-hid")==0){
-//                 flaghid = 1;
-//         }else if(strcmp(trozos[i], "-reca")==0){ 
-//                 flagreca = 1;
-//         }else if(strcmp(trozos[i], "-recb")==0){
-//                 flagrecb = 1;
-//         }else{
-//                 strcpy(*d.comando, trozos[i]);
-//                 insertElement(d, &ficheiros);
-//         }
-// }
-// p =  first(ficheiros);
-// while (p!=NULL){ 
-//         d = getItem(p,&ficheiros);
-//         funStatAux(*d.comando, flagacc, flaglink, flaglong); 
-//         p = next(p,ficheiros);
-// }
+        for (int k = 1; k < numtrozos; k++){
+                
+                if(strcmp(trozos[k], "-long")==0){
+                        flagLong = 1;
+                }
+                else if (strcmp(trozos[k], "-link")==0) 
+                        flagLink = 1;
+                else if (strcmp(trozos[k], "-acc")==0)
+                        flagAcc = 1;
+                else {
+                        strcpy(*d.comando, trozos[i]);
+                        insertElement(d, &ficheiros);
+                }                  
+        }
+        p =  first(ficheiros);
+        while (p!=NULL){ 
+                d = getItem(p,&ficheiros);
+                funStatAux(*d.comando, flagAcc, flagLink, flagLong); 
+                p = next(p,ficheiros);
+        }
 }
 
+
+void funList(){
+        int flagreca=0, flagrecb=0, flaghid=0, flaglong=0, flaglink=0, flagacc=0;
+        int i,j=0;
+        tList ficheiros;
+        createList(&ficheiros);
+        tItemL d;
+        tPosL p ;
+
+        for (i = 1; i< numtrozos ; i++){
+                if(strcmp(trozos[i], "-long")==0){
+                        flaglong = 1;
+                }else if(strcmp(trozos[i], "-link")==0){
+                        flaglink = 1;
+                }else if(strcmp(trozos[i], "-acc")==0){
+                        flagacc = 1;
+                }else if(strcmp(trozos[i], "-hid")==0){
+                        flaghid = 1;
+                }else if(strcmp(trozos[i], "-reca")==0){ 
+                        flagreca = 1;
+                }else if(strcmp(trozos[i], "-recb")==0){
+                        flagrecb = 1;
+                }else{
+                        strcpy(*d.comando, trozos[i]);
+                        insertElement(d, &ficheiros);
+                }
+        }
+
+        p =  first(ficheiros);
+        while (p!=NULL){ 
+                d = getItem(p,&ficheiros);
+                funStatAux(*d.comando, flagacc, flaglink, flaglong);
+                p = next(p,ficheiros);
+        }
+}
 
 void funDelete(){
         int i;
