@@ -207,8 +207,34 @@ void funCreate(){
                 if((fich=creat(trozos[2], 0775))==-1)
                         perror("No se ha podido crear el archivo.\n");
         }
-}       
- 
+}
+
+void funStat(){
+        int flagAcc = 0, flagLink = 0, flagLong = 0;
+        char *fileORdir[NAME_MAX];
+        int i = 0;
+
+        for (int k = 1; k < numtrozos; k++){
+                
+                if(strcmp(trozos[k], "-long")==0){
+                        flagLong = 1;
+                }
+                else if (strcmp(trozos[k], "-link")==0) 
+                        flagLink = 1;
+                else if (strcmp(trozos[k], "-acc")==0)
+                        flagAcc = 1;
+                else {
+                        fileORdir[i] = trozos[k];
+                        i++;
+                }                  
+        }
+        
+        for(int j=0; j < i ; j++){
+                funStatAux(fileORdir[j], flagAcc, flagLink, flagLong);
+        }
+
+}
+        
 void funStatAux(char *name, int Acc, int Link, int Long){
         char *apunta_a;
         char *permisos=malloc(sizeof(char)*PATH_MAX);
@@ -263,49 +289,16 @@ void funStatAux(char *name, int Acc, int Link, int Long){
         } else {
                 fprintf(stderr, "%s '%s'\n", strerror(errno), name);
         }
-        // printf("\n");
-}
-
-void funStat(){
-        int flagAcc = 0, flagLink = 0, flagLong = 0;
-        tList ficheiros;
-        createList(&ficheiros);
-        tItemL d;
-        tPosL p ;
-        int i = 0;
-
-        for (int k = 1; k < numtrozos; k++){
-                
-                if(strcmp(trozos[k], "-long")==0){
-                        flagLong = 1;
-                }
-                else if (strcmp(trozos[k], "-link")==0) 
-                        flagLink = 1;
-                else if (strcmp(trozos[k], "-acc")==0)
-                        flagAcc = 1;
-                else {
-                        strcpy(*d.comando, trozos[i]);
-                        insertElement(d, &ficheiros);
-                }                  
-        }
-        p =  first(ficheiros);
-        while (p!=NULL){ 
-                d = getItem(p,&ficheiros);
-                funStatAux(*d.comando, flagAcc, flagLink, flagLong); 
-                p = next(p,ficheiros);
-        }
 }
 
 
 void funList(){
-        int flagreca=0, flagrecb=0, flaghid=0, flaglong=0, flaglink=0, flagacc=0;
-        int i,j=0;
-        tList ficheiros;
-        createList(&ficheiros);
-        tItemL d;
-        tPosL p ;
+        int flagreca=0, flagrecb=0, flaghid=0, flaglong=0, flaglink=0, flagacc=0, opciones_trozos = 0, i;
+        char *fileORdir[NAME_MAX];
+        struct stat buf;
+        int k = 0 ;
 
-        for (i = 1; i< numtrozos ; i++){
+        for (i = 1; i < numtrozos ; i++){
                 if(strcmp(trozos[i], "-long")==0){
                         flaglong = 1;
                 }else if(strcmp(trozos[i], "-link")==0){
@@ -319,18 +312,93 @@ void funList(){
                 }else if(strcmp(trozos[i], "-recb")==0){
                         flagrecb = 1;
                 }else{
-                        strcpy(*d.comando, trozos[i]);
-                        insertElement(d, &ficheiros);
+                        if (stat(trozos[i], &buf) == -1) {
+                        perror("Error: ");
+                        continue;
                 }
+                        fileORdir[k] = trozos[i];
+                        k++;
+                }
+                
+        } 
+        
+        opciones_trozos = flaglong + flaglink + flagacc + flaghid + flagreca +  flagrecb;
+        if(numtrozos == opciones_trozos + 1){
+                funCarpeta();
         }
 
-        p =  first(ficheiros);
-        while (p!=NULL){ 
-                d = getItem(p,&ficheiros);
-                funStatAux(*d.comando, flagacc, flaglink, flaglong);
-                p = next(p,ficheiros);
+        for(int j = 0; j < k ; j++){  
+                if(LetraTF(buf.st_mode) == 'd'){
+                        if(!(flagreca) && !(flagrecb)){
+                                funListFiles(fileORdir[j], flagacc, flaglink, flaglong, flaghid);
+                        }
+                        if(flagrecb || flagreca){
+                                funListRecAux(fileORdir[j], flagacc, flaglink, flaglong, flagreca, flagrecb, flaghid);
+                        }
+
+                } else {
+                        funStatAux(fileORdir[j], flagacc, flaglink, flaglong);
+                }                   
         }
 }
+
+ void funListFiles(char *directorio, int Acc, int Link, int Long, int Hid){
+        DIR *dir;
+        struct dirent *d;
+
+        dir = opendir(directorio); // accedemos al directorio: */
+        if (dir) {
+                chdir(directorio);
+                printf("************%s\n", directorio);
+                while ((d = readdir(dir)) != NULL) {
+                if (d->d_name[0] == '.' && !Hid) {
+                        continue;
+                }
+                funStatAux(d->d_name, Acc, Link, Long);
+                }
+                if (strcmp(directorio, ".") != 0 && strcmp(directorio, "..") != 0) {
+                chdir("..");
+                }
+                closedir(dir);
+        }       
+ }
+
+void funListRecAux(char *directorio, int Acc, int Link, int Long, int Reca, int Recb ,int Hid){
+        DIR *dir;               //cabecera que contiene operaciones con directorios
+        struct dirent *d;
+        struct stat buf;
+
+        if (Reca){
+               funListFiles(directorio, Acc, Link, Long, Hid);
+        }
+        
+        dir = opendir(directorio);
+        if(dir){
+                chdir(directorio);
+                while((d = readdir(dir)) != NULL){
+                        if(d->d_name[0] == '.' && !(Hid)){
+                                continue;
+                        }
+                        if (strcmp(d->d_name, ".") == 0 || strcmp(d->d_name, "..") == 0){
+                                continue;
+                        }
+                                        
+                        stat(d->d_name, &buf);
+                        if(LetraTF(buf.st_mode) == 'd') {
+                                funListRecAux(d->d_name, Acc, Link, Long, Reca, Recb, Hid);
+                        }
+                }
+                if (strcmp(directorio, ".") != 0 && strcmp(directorio, "..") != 0) {
+                        chdir("..");     
+                }                           
+                closedir(dir);
+        }
+
+        if(Recb){
+                funListFiles(directorio, Acc, Link, Long, Hid);
+        }
+}
+
 
 void funDelete(){
         int i;
@@ -434,5 +502,3 @@ int main(){
                 }
         }
 }    
-
-
