@@ -12,7 +12,7 @@ typedef char cmd[MAX_car];
 
 
 typedef struct tNode* tPosL;
-typedef struct tItem{
+typedef struct {
   cmd comando[MAX_car];
 }tItemL;
 
