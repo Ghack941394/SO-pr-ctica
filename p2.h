@@ -36,6 +36,7 @@ void funList();
 void funStat();
 void funDelete();
 void funDeltree();
+void funAlloc();
 
 struct cmd {
   char *nombre;
