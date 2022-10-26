@@ -421,7 +421,10 @@ void funStatAux(char *name, int Acc, int Link, int Long){
  */
 void funStat(){
         int flagAcc = 0, flagLink = 0, flagLong = 0;
-        char *fileORdir[NAME_MAX];
+        tList ficheiros;
+        createList(&ficheiros);
+        tItemL d;
+        tPosL p ;
         int i = 0;
 
         for (int k = 1; k < numtrozos; k++){
@@ -432,14 +435,14 @@ void funStat(){
                         flagLink = 1;
                 } else if (strcmp(trozos[k], "-acc") == 0){
                         flagAcc = 1;
-                } else { //no es ninguna de las opciones del comando 
-                        fileORdir[i] = trozos[k];  //ingresamos en el array el nombre del archivo o directorio
-                        i++; //vamos ingresando por orden en el array por lo que vamos avanzando
+                } else {
+					strcpy(*d.comando, trozos[k]);
+                	insertElement(d, &ficheiros);
                 }                  
         }
         
-        for(int j = 0; j < i ; j++){
-                funStatAux(fileORdir[j], flagAcc, flagLink, flagLong); //llamamos la funcion con cada elemento del array 
+        while (p!=NULL){
+                funStatAux(*d.comando, flagAcc, flagLink, flagLong);
         }
 }
 
@@ -567,10 +570,14 @@ void funListRecAux(char *directorio, int Acc, int Link, int Long, int Reca, int 
  * @return void.
  */
 void funList(){
-        int flagreca=0, flagrecb=0, flaghid=0, flaglong=0, flaglink=0, flagacc=0, opciones_trozos = 0;
-        char *fileORdir[NAME_MAX];
-        struct stat buf;
-        int k = 0 ;
+    int flagreca=0, flagrecb=0, flaghid=0, flaglong=0, flaglink=0, flagacc=0, opciones_trozos = 0;
+    //char *fileORdir[NAME_MAX];
+    struct stat buf;
+    int k = 0 ;
+	tList ficheiros;
+    createList(&ficheiros);
+    tItemL d;
+    tPosL p ;
 
         for (int i = 1; i < numtrozos ; i++){
                 if(strcmp(trozos[i], "-long") == 0){
@@ -589,9 +596,9 @@ void funList(){
                         if (stat(trozos[i], &buf) == -1){
                         perror("Error: ");
                         continue;
-                }
-                        fileORdir[k] = trozos[i]; //ingresamos en el array el nombre del directorio
-                        k++; //vamos ingresando por orden en el array por lo que vamos avanzando
+                		}
+                        strcpy(*d.comando, trozos[i]); //sobreescribimos
+             			insertElement(d, &ficheiros);  //insertanos novo ou o primeiro ficheiro
                 }   
         } 
         
@@ -600,21 +607,31 @@ void funList(){
                 funCarpeta();
         }
 
-        for(int j = 0; j < k ; j++){  
+		p=first(ficheiros);
+
+        while(p!=NULL){  
+				d = getItem(p,&ficheiros);
+				printf("hola\n");
+				printf("%s\n",*d.comando);
+				
+				if(lstat(*d.comando, &buf) == 0){
+						
                  //comprobamos que es un directorio
                 if(LetraTF(buf.st_mode) == 'd'){       
                         if(!(flagreca) && !(flagrecb)){
-                                funListFiles(fileORdir[j], flagacc, flaglink, flaglong, flaghid);
+                                funListFiles(*d.comando, flagacc, flaglink, flaglong, flaghid);
                         }
                         
                         if(flagrecb || flagreca){ 
-                                funListRecAux(fileORdir[j], flagacc, flaglink, flaglong, flagreca, flagrecb, flaghid);
+                                funListRecAux(*d.comando, flagacc, flaglink, flaglong, flagreca, flagrecb, flaghid);
                         }
 
                 } else { 
                         //si es un archivo, entonces llamamos a Stat
-                        funStatAux(fileORdir[j], flagacc, flaglink, flaglong);
-                }                   
+                        funStatAux(*d.comando, flagacc, flaglink, flaglong);
+                }
+				}
+				p= next(p,ficheiros);
         }
 }
 
