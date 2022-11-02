@@ -16,12 +16,16 @@
 #include <grp.h>
 #include <fcntl.h>
 #include "historial.h"
+#include<sys/shm.h>
+#include<sys/mman.h>
+#include<sys/ipc.h>
 
 #define DATA 32
 #define MAXLINEA 4096
 #define MAXTROZOS 1028
 #define MAXFyH 128
 #define NAMEMAX 1024
+#define TAMANO 2048
 
 void funAutores();
 void funFecha();
