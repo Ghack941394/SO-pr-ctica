@@ -16,6 +16,7 @@
 #include <grp.h>
 #include <fcntl.h>
 #include "historial.h"
+#include "lmem.h"
 #include<sys/shm.h>
 #include<sys/mman.h>
 #include<sys/ipc.h>

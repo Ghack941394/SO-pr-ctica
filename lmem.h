@@ -13,7 +13,7 @@ typedef char mem[MAXI];
 
 typedef struct tNodem* tPosMem;
 typedef struct {
-  void *direc;
+  mem direc;
   int tam;
   mem tempo;
   mem tipo;

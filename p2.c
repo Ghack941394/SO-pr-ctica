@@ -710,7 +710,7 @@ void funDeltree(){
         }
 }
 
-//////////////////P2///////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////P2///////////////////////////////////////////////////////////////////////
 
 void Recursiva (int n){
   char automatico[TAMANO];
@@ -753,18 +753,29 @@ void * ObtenerMemoriaShmget (key_t clave, size_t tam){
  /* Guardar en la lista   InsertarNodoShared (&L, p, s.shm_segsz, clave); */
     return (p);
 }
-void do_AllocateCreateshared (char *tr[]){
+void do_AllocateCreateshared (tListMem L){
    key_t cl;
    size_t tam;
-   void *p;
+   tItemMem d;
+   tPosMem p = firstm(L);
+   int flag = 0;
+   //Se o segundo troz é -shared ou -createshared activase a flag
+   if (strcmp(trozos[1], "-shared")==0 || strcmp(trozos[1], "-createshared")==0){
+        flag=1;
+   }
+   
 
-   if (tr[0]==NULL || tr[1]==NULL) {
-		//ImprimirListaShared(&L);
+   if (numtrozos==1 || (numtrozos==2 && flag) || (numtrozos == 3 && flag)) {
+                while (p!=NULL){
+                        d = getItemm(p,L);
+                        printf("%10s%14d%2s shared (key %d)",d.direc, d.tam, d.tempo, d.chave);
+                        p = nextm(p,L);
+                }
 		return;
    }
-  
-   cl=(key_t)  strtoul(tr[0],NULL,10);
-   tam=(size_t) strtoul(tr[1],NULL,10);
+
+   cl=(key_t)  strtoul(trozos[2],NULL,10);
+   tam=(size_t) strtoul(trozos[3],NULL,10);
    if (tam==0) {
 	printf ("No se asignan bloques de 0 bytes\n");
 	return;
@@ -791,23 +802,29 @@ void * MapearFichero (char * fichero, int protection){
     return p;
 }
 
-void do_AllocateMmap(char *arg[]){ 
+void do_AllocateMmap(tListMem L){ 
      char *perm;
      void *p;
      int protection=0;
+     tItemMem d;
+     tPosMem p = first(L);
      
-     if (arg[0]==NULL)
-            {//ImprimirListaMmap(&L); 
+     if (numtrozos==0 || (numtrozos==2 && strcmp(trozos[1], "-mmap")==0) )
+            {while (p!=NULL){
+                        d = getItemm(p,L);
+                        printf("%10s%14d%2s %d (descriptor %d)",d.direc, d.tam, d.tempo, d.nome, d.df);
+                        p = nextm(p,L);
+                } 
             return;}
-     if ((perm=arg[1])!=NULL && strlen(perm)<4) {
+     if ((perm=trozos[3])!=NULL && strlen(perm)<4) {
             if (strchr(perm,'r')!=NULL) protection|=PROT_READ;
             if (strchr(perm,'w')!=NULL) protection|=PROT_WRITE;
             if (strchr(perm,'x')!=NULL) protection|=PROT_EXEC;
      }
-     if ((p=MapearFichero(arg[0],protection))==NULL)
+     if ((p=MapearFichero(trozos[2],protection))==NULL)
              perror ("Imposible mapear fichero");
      else
-             printf ("fichero %s mapeado en %p\n", arg[0], p);
+             printf ("fichero %s mapeado en %p\n", trozos[2], p);
 }
 
 void do_DeallocateDelkey (char *args[]){
