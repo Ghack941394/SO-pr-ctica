@@ -1,5 +1,5 @@
-p2 :  p2.o historial.o lmem.o
-	gcc -o p2  p2.o historial.o lmem.o
+p2 :  p2.o historial.o lmem.o 
+	gcc -o p2  p2.o historial.o lmem.o 
 	echo "Compilación exitosa"  
 
 historial.o : historial.h historial.c
