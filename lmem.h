@@ -38,7 +38,7 @@ tPosMem firstm(tListMem L);
 
 tPosMem nextm(tPosMem , tListMem L);
 
-tItemMem getItemm(tPosMem p, tListMem* L);
+tItemMem getItemm(tPosMem p, tListMem L);
 
 bool insertElementm(tItemMem d, tListMem* L);
 

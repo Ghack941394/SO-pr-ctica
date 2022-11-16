@@ -22,7 +22,7 @@ tPosMem nextm(tPosMem p, tListMem L){
         return p->next;
 }
 
-tItemMem getItemm(tPosMem p, tListMem* L){
+tItemMem getItemm(tPosMem p, tListMem L){
 return p->data ; // a función de tipo tItemL tenque devolver tItemL
 }
 
