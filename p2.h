@@ -41,7 +41,7 @@ void funList();
 void funStat();
 void funDelete();
 void funDeltree();
-void funAlloc();
+void funAlloc(tListMem *L);
 
 struct cmd {
   char *nombre;

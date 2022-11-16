@@ -13,13 +13,13 @@ typedef char mem[MAXI];
 
 typedef struct tNodem* tPosMem;
 typedef struct {
-  mem direc;
+  void *direc;
   int tam;
   mem tempo;
   mem tipo;
   // E para ficheiros mapeados :
   int chave;
-  mem nome;
+  mem nomefich;
   int df; 
 }tItemMem;
 
