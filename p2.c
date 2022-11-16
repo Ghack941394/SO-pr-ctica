@@ -731,11 +731,70 @@ void LlenarMemoria (void *p, size_t cont, unsigned char byte){
 		arr[i]=byte;
 }
 
-void * ObtenerMemoriaShmget (key_t clave, size_t tam){
+
+//Función para printar Lista de alloc/delloc
+void printListMm(tListMem L, char *tipo){
+         int all = 1; //flag para ver se imprimo a lista completa , canto tipo = all
+        printf("******Lista de bloques asignados "); 
+        if (strcmp("all",tipo)!=0){
+                printf("%s ", tipo);
+                all = 0;
+        }
+        printf("para el proceso %d\n\n", getpid());
+         
+        if(!isEmptyListm(L)){
+                tPosMem p = firstm(L);
+                tItemMem d;
+                while (p!=NULL){
+                        d = getItemm(p, L);
+                        if( strcmp(d.tipo, tipo)==0 || all){
+                                printf("   %p%10d  %s ", d.direc, d.tam, d.tempo);
+                                if(strcmp(d.tipo,"mmap")==0 )
+				        printf("%s (descriptor %d)",d.nomefich, d.df);
+			        if(strcmp(d.tipo,"shared")==0 || strcmp(d.tipo,"malloc")==0)
+				        printf("%s ",d.tipo);
+                                if (strcmp(d.tipo,"shared")==0)
+                                        printf("(key %d)", d.chave);      
+                        }
+                        printf("\n");
+                        p = nextm(p, L);
+		}
+        }
+}
+
+//Función auxiliar para insertar elementos á lista de memoria según os parámetros
+void AuxInsertElememMem(void *dire, int tam, char *tipo, int chave, char *nfich, int df, tListMem *L ){
+        tItemMem d;
+        time_t data_t;
+        time(&data_t);
+        struct tm *data;
+
+        int mmap=0, shared=0;
+
+        if(strcmp(tipo, "shared") == 0)
+                shared = 1;
+        if(strcmp(tipo, "mmap") == 0)
+                mmap = 1;
+
+        if ((data= localtime(&data_t))==NULL)
+                perror("time\n");
+        strcpy(d.tempo, asctime(data));   // engado o tempo e data
+        d.direc = dire; //engado direc
+        d.tam = tam; //engado tam
+        strcpy(d.tipo, tipo); //engado tipo
+        d.chave = chave; //en shared ou mmap engado chave, se non é 0
+        d.df = df; //descriptor de fich, que se non é mmap é -1
+        if (mmap)
+                strcpy(d.nomefich, nfich);  // en mmap nome do fich
+        
+        //inserto elemento
+        insertElementm(d, L);
+}
+
+void * ObtenerMemoriaShmget (key_t clave, size_t tam, int flag, tListMem *L){ //flag para insertar na lista o tamaño segun se é created = 0 ou shared = 1
     void * p;
     int aux,id,flags=0777;
     struct shmid_ds s;
-
     if (tam)     /*tam distito de 0 indica crear */
         flags=flags | IPC_CREAT | IPC_EXCL;
     if (clave==IPC_PRIVATE)  /*no nos vale*/
@@ -744,53 +803,66 @@ void * ObtenerMemoriaShmget (key_t clave, size_t tam){
         return (NULL);
     if ((p=shmat(id,NULL,0))==(void*) -1){
         aux=errno;
-        if (tam)
+        if (tam || s.shm_segsz)
              shmctl(id,IPC_RMID,NULL);
         errno=aux;
         return (NULL);
     }
     shmctl (id,IPC_STAT,&s);
- /* Guardar en la lista   InsertarNodoShared (&L, p, s.shm_segsz, clave); */
+    if(flag)
+        tam = s.shm_segsz;
+    AuxInsertElememMem(p,tam,"shared",clave,NULL,-1,L);
     return (p);
 }
-/*void do_AllocateCreateshared (tListMem *L){
+
+//Función para facer o allocate tanto shared como createshared
+void do_AllocateCreateshared (tListMem *L){
    key_t cl;
    size_t tam;
    tItemMem d;
    tPosMem p = firstm(*L);
-   int flag = 0;
-   //Se o segundo troz é -shared ou -createshared activase a flag
-   if (strcmp(trozos[1], "-shared")==0 || strcmp(trozos[1], "-createshared")==0){
-        flag=1;
-   }
-   
+   int flagCreate = 0;
+   int flagShared = 0;
+   //flags para distinguir cando crear e cando compartir memoria
+   if(strcmp(trozos[1],"-shared")==0)
+        flagShared = 1;
+   if(strcmp(trozos[1],"-createshared")==0)
+        flagCreate = 1;
 
-   if (numtrozos==1 || (numtrozos==2 && flag) || (numtrozos == 3 && flag)) {
-                while (p!=NULL){
-                        d = getItemm(p,L);
-                        printf("%10p%14d%2s shared (key %d)",d.direc, d.tam, d.tempo, d.chave);
-                        p = nextm(p,*L);
-                }
-		return;
-   }
+   if ((numtrozos==2 && flagShared) || (numtrozos < 3 && flagCreate))
+        printListMm(*L, "shared");             
 
-   cl=(key_t)  strtoul(trozos[2],NULL,10);
-   tam=(size_t) strtoul(trozos[3],NULL,10);
-   if (tam==0) {
-	printf ("No se asignan bloques de 0 bytes\n");
-	return;
-   }
-   if ((p=ObtenerMemoriaShmget(cl,tam))!=NULL)
-		printf ("Asignados %lu bytes en %p\n",(unsigned long) tam, p);
-   else
-		printf ("Imposible asignar memoria compartida clave %lu:%s\n",(unsigned long) cl,strerror(errno));
-}*/
+   else{
+        cl=(key_t)  strtoul(trozos[2],NULL,10);
+        if(trozos[3]!=NULL) 
+                tam=(size_t) strtoul(trozos[3],NULL,10);
+        else
+                tam=0;
+        if (tam==0 && flagCreate) {
+	        perror("No se asignan bloques de 0 bytes\n");
+	        return;
+        }
+        if (flagCreate){
+                if ((p=ObtenerMemoriaShmget(cl,tam,0,L))!=NULL)
+		        printf ("Asignados %lu bytes en %p\n",(unsigned long) tam, p);
+                else
+	        	printf("Imposible asignar memoria compartida clave %lu:%s\n",(unsigned long) cl,strerror(errno));
+        }
+        if (flagShared){
+                if ((p=ObtenerMemoriaShmget(cl,tam,1,L))!=NULL)
+                        printf("Memoria compartida de clave %lu en %p\n",(unsigned long) cl,p);             
+                else
+                        perror("Imposible obtener memoria shmget\n");
+        } 
+        }
+}
 
 
-void * MapearFichero (char * fichero, int protection){
+void * MapearFichero (char * fichero, int protection, tListMem *L){
     int df, map=MAP_PRIVATE,modo=O_RDONLY;
     struct stat s;
     void *p;
+    int tam;
 
     if (protection&PROT_WRITE)
           modo=O_RDWR;
@@ -798,10 +870,12 @@ void * MapearFichero (char * fichero, int protection){
           return NULL;
     if ((p=mmap (NULL,s.st_size, protection,map,df,0))==MAP_FAILED)
            return NULL;
-/* Guardar en la lista    InsertarNodoMmap (&L,p, s.st_size,df,fichero); */
+    
+    tam = s.st_size; //gardo o tamaño do ficheiro na variable tam
+    AuxInsertElememMem(p, tam, "mmap", 0, fichero, df, L);
+
     return p;
 }
-/*
 void do_AllocateMmap(tListMem *L){ 
      char *perm;
      void *p;
@@ -809,26 +883,19 @@ void do_AllocateMmap(tListMem *L){
      tItemMem d;
      tPosMem pos = firstm(*L);
      
-     if (numtrozos==0 || (numtrozos==2 && strcmp(trozos[1], "-mmap")==0) )
-            {while (pos!=NULL){
-                        d = getItemm(p,L);
-                        printf("%10p%14d%2s %s (descriptor %d)",d.direc, d.tam, d.tempo, d.nomefich, d.df);
-                        pos = nextm(p,*L);
-                } 
-            return;}
+     if ((numtrozos==2 && strcmp(trozos[1], "-mmap")==0))
+            printListMm(*L,"mmap");
+     
      if ((perm=trozos[3])!=NULL && strlen(perm)<4) {
             if (strchr(perm,'r')!=NULL) protection|=PROT_READ;
             if (strchr(perm,'w')!=NULL) protection|=PROT_WRITE;
             if (strchr(perm,'x')!=NULL) protection|=PROT_EXEC;
      }
-     if ((p=MapearFichero(trozos[2],protection))==NULL)
+     if ((p=MapearFichero(trozos[2],protection, L))==NULL)
              perror ("Imposible mapear fichero");
-     else{
+     else
              printf ("fichero %s mapeado en %p\n", trozos[2], p);
-             //AuxInsertElememMem(p,)
-     }
 }
-*/
 void do_DeallocateDelkey (char *args[]){
    key_t clave;
    int id;
@@ -927,65 +994,6 @@ void Do_pmap () /*sin argumentos*/
  }
 
 
-void printListMm(tListMem L, char *tipo, int all){
-         
-        printf("******Lista de bloques asignados "); 
-        if (all==0)
-                printf("%s ", tipo);
-        printf("para el proceso %d\n\n", getpid());
-         
-        if(!isEmptyListm(L)){
-        
-                tPosMem p = firstm(L);
-                tItemMem d;
-        
-                while (p!=NULL){
-                        d = getItemm(p, L);
-                        if( strcmp(d.tipo, tipo)==0 || all == 1){
-			        
-                                printf("%6p%14d  %s ", d.direc, d.tam, d.tempo);
-			        
-                                if( strcmp(d.tipo,"mmap")==0 )
-				        printf("%s (descriptor %d)",d.nomefich, d.df);
-
-			        if( strcmp(d.tipo,"shared")==0 || strcmp(d.tipo,"malloc")==0)
-				        printf("%s ",d.tipo);
-                                        if (strcmp(d.tipo,"shared")==0)
-                                                printf("(key %d)", d.chave);
-                        }
-                        printf("\n");
-                p = nextm(p, L);
-		}
-        }
-}
-void AuxInsertElememMem(void *dire, int tam, char *tipo, int chave, char *nfich, int df, tListMem *L ){
-        tItemMem d;
-        time_t data_t;
-        time(&data_t);
-        struct tm *data;
-
-        int mmap=0, shared=0;
-
-        if(strcmp(tipo, "shared") == 0)
-                shared = 1;
-        if(strcmp(tipo, "mmap") == 0)
-                mmap = 1;
-
-
-        if ((data= localtime(&data_t))==NULL)
-                perror("time\n");
-        strcpy(d.tempo, asctime(data));   // engado o tempo e data
-        d.direc = dire; //engado direc
-        d.tam = tam; //engado tam
-        strcpy(d.tipo, tipo); //engado tipo
-        d.chave = chave; //en shared ou mmap engado chave, se non é 0
-        d.df = df; //descriptor de fich
-        if (mmap)
-                strcpy(d.nomefich, nfich);  // en mmap nome do fich
-        
-        //inserto elemento
-        insertElementm(d, L);
-}
 
 //Aux malloc feita por nós 
 void do_AllocateMalloc(tListMem *L){
@@ -1006,23 +1014,23 @@ void do_AllocateMalloc(tListMem *L){
                         printf("No se asignan bloques de 0 bytes\n");
                 }
         }else
-                 printListMm(*L,"malloc",0);
+                 printListMm(*L,"malloc");
 }
 
-
+//Función para opcións do allocate
 void funAlloc(tListMem *L){      
         if (numtrozos>1){
                 
                 if(strcmp("-malloc", trozos[1]) == 0)
                         do_AllocateMalloc(L);
                 else if(strcmp("-mmap", trozos[1]) == 0)
-                        printf("uwu eeeee %s\n", trozos[1]);//do_AllocateMmap(L);
+                        do_AllocateMmap(L);
                 else if((strcmp("-shared", trozos[1]) == 0) || (strcmp("-createshared", trozos[1])==0))
-                        printf("uwu eeeee %s\n", trozos[1]);//do_AllocateCreateshared(L);
+                        do_AllocateCreateshared(L);
                 else
                         printf("uso: allocate [-malloc|-shared|-createshared|-mmap] ....\n");
         }else
-                printListMm(*L, trozos[1], 1); //o tercer parametro é unha flag para ver se quero imprimir todo
+                printListMm(*L, "all"); 
         
 }
 
