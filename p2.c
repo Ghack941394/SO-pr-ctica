@@ -886,15 +886,17 @@ void do_AllocateMmap(tListMem *L){
      if ((numtrozos==2 && strcmp(trozos[1], "-mmap")==0))
             printListMm(*L,"mmap");
      
-     if ((perm=trozos[3])!=NULL && strlen(perm)<4) {
+     else{
+        if ((perm=trozos[3])!=NULL && strlen(perm)<4) {
             if (strchr(perm,'r')!=NULL) protection|=PROT_READ;
             if (strchr(perm,'w')!=NULL) protection|=PROT_WRITE;
             if (strchr(perm,'x')!=NULL) protection|=PROT_EXEC;
-     }
-     if ((p=MapearFichero(trozos[2],protection, L))==NULL)
+        }
+        if ((p=MapearFichero(trozos[2],protection, L))==NULL)
              perror ("Imposible mapear fichero");
-     else
+        else
              printf ("fichero %s mapeado en %p\n", trozos[2], p);
+     }
 }
 void do_DeallocateDelkey (char *args[]){
    key_t clave;
