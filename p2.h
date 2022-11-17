@@ -42,6 +42,7 @@ void funStat();
 void funDelete();
 void funDeltree();
 void funAlloc(tListMem *L);
+void funIo();
 
 struct cmd {
   char *nombre;
@@ -65,6 +66,10 @@ struct cmd comandos[] = {
         {"stat",funStat},
         {"delete",funDelete},
         {"deltree", funDeltree},
+        {"i-o",funIo},
+        {"e-s",funIo},
+        {"i/o",funIo},
+        {"e/s",funIo},
         {NULL,NULL},
 };
 

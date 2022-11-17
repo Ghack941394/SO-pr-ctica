@@ -936,24 +936,23 @@ ssize_t LeerFichero (char *f, void *p, size_t cont){
    return n;
 }
 
-/*void do_I_O_read (char *ar[]){
+void do_I_O_read (){
    void *p;
    size_t cont=-1;
    ssize_t n;
-   if (ar[0]==NULL || ar[1]==NULL){
+   if (numtrozos<5){
 	printf ("faltan parametros\n");
 	return;
    }
-   p=cadtop(ar[1]);  convertimos de cadena a puntero
-   if (ar[2]!=NULL)
-	cont=(size_t) atoll(ar[2]);
+   p=(void*) strtoul(trozos[2],NULL,16) ;  /*convertimos de cadena a puntero*/
+   if (trozos[4]!=NULL)
+	cont=(size_t) atoll(trozos[4]);
 
-   if ((n=LeerFichero(ar[0],p,cont))==-1)
+   if ((n=LeerFichero(trozos[2],p,cont))==-1)
 	perror ("Imposible leer fichero");
    else
-	printf ("leidos %lld bytes de %s en %p\n",(long long) n,ar[0],p);
+	printf ("leidos %lld bytes de %s en %p\n",(long long) n,trozos[2],p);
 }
-*/
 
 ssize_t EscribirFichero (char *f, void *p, size_t cont,int overwrite){
    ssize_t  n;
@@ -1037,18 +1036,18 @@ void do_Deallocate(tListMem *L){
         tPosMem p;
         tItemMem d;
 
-        if(sscanf(trozos[1],"0x%p",&direc)==0 || direc==NULL)
-                perror("Dirección no válida\n");
-
-        p = firstm(L);
-        d = getItemm(p,L);
-        while (strcmp(direc, d.direc)!=0 && p!=NULL){
-                p = nextm(p,L);
-                d = getItemm(p,L);
+        if(sscanf(trozos[1],"0x%p",&direc)==0 || direc==NULL){
+                perror("Dirección no válida\n"); return;
+        }
+        p = firstm(*L);
+        while (p!=NULL){
+                d = getItemm(p,*L);
+                if (strcmp(direc, d.direc)==0)
+                        break;
+                p = nextm(p,*L);            
         }
 
         if(p!=NULL){
-                d = getItemm(p,L);
 
                 if( (strcmp("malloc", d.tipo) == 0) ){
                         free(direc);
@@ -1070,26 +1069,26 @@ void do_DeallocateMalloc(tListMem *L){
         tItemMem d;
 
         if (numtrozos == 2){
-                printListMm(L, "malloc");
+                printListMm(*L, "malloc");
         }
         else{
                 int tama = atoi(trozos[2]);
         
-                p = firstm(L);
+                p = firstm(*L);
 
                 while (p!=NULL){
-                        d = getItemm(p,L);
+                        d = getItemm(p,*L);
                         if (strcmp(d.tipo,"malloc")==0)
                                 if (d.tam == tama )
                                         break;
-                        p = nextm(p,L);
+                        p = nextm(p,*L);
                 }
                 if (p!=NULL){
                         free(d.direc);
                         removeElementm(L,p);
                 }
                 else
-                        printListMm(L, "malloc");
+                        printListMm(*L, "malloc");
         }
 
 }
@@ -1098,18 +1097,18 @@ void do_DeallocateShared(tListMem *L){
         tItemMem d;
         int s;
         if (numtrozos == 2)
-                printListMm(L,"shared");
+                printListMm(*L,"shared");
         else{
                 int chave = atoi(trozos[2]);
-                p = firstm(L);
+                p = firstm(*L);
                 //recoro alista para ver se atopo a chave 
                 while (p!=NULL){
-                        d = getItemm(p,L);
+                        d = getItemm(p,*L);
                         if (strcmp(d.tipo,"shared") == 0){
                                 if (d.chave == chave)
                                         break;
                         }
-                        p = nextm(p,L);
+                        p = nextm(p,*L);
                 }
                 //se a encontro 
                 if (p!=NULL){
@@ -1121,7 +1120,6 @@ void do_DeallocateShared(tListMem *L){
                 }else // se non existe :
                         printf("No hay bloque de esa clave mapeado en el proceso\n");
         }
-        
 
 }
 
@@ -1130,16 +1128,16 @@ void do_DeallocateMmap(tListMem *L){
         tItemMem d;
 
         if (numtrozos == 2)
-                printListMm(L,"mmap");
+                printListMm(*L,"mmap");
         else{
-                p = firstm(L);
+                p = firstm(*L);
                 while (p!=NULL){
-                        d = getItemm(p,L);
+                        d = getItemm(p,*L);
                         if(strcmp(d.tipo,"mmap")==0){
                                 if(strcmp(trozos[2],d.nomefich)==0)
                                         break;
                         }
-                        p = nextm(p,L);
+                        p = nextm(p,*L);
                 }
                 if (p!=NULL){//se encotro o ficheiro na lista
                         munmap(d.direc, d.tam);
@@ -1166,9 +1164,53 @@ void funDealloc(tListMem *L){
                 }
         }else
                 printListMm(*L, "all"); 
-
 }
 
+void do_I_O_write(){
+        int df, per; //descriptor de ficheiro e permisos
+
+        if (numtrozos<6 || (numtrozos<5 && strcmp("-o", trozos[2])==0))
+                printf("faltan parametros\n");
+        else{
+                
+        if((strcmp(trozos[2],"-o")==0)){
+        
+    		per = O_WRONLY | O_CREAT | O_TRUNC;
+    		char *dire = (char*)strtoul(trozos[4],NULL,16);
+    		if((df=open(trozos[3], per, S_IRWXU | S_IRWXG | S_IRWXO))==-1){
+    			perror("imposible abrir el fichero\n");
+    		}else{
+    			printf("escritos t%s bytes en %s desde %p\n",trozos[5],trozos[3],dire);
+    			write(df,dire, atoi(trozos[5]));
+                        close(df);
+                }
+  	}
+        else
+    		per = O_WRONLY | O_CREAT | O_EXCL;
+    		char *dire = (char*)strtoul(trozos[3],NULL,16);
+    		if((df=open(trozos[2], per, S_IRWXU | S_IRWXG | S_IRWXO))==-1){
+    			perror("imposible abrir el fichero\n");
+    			return;
+    		}else{
+    			printf("escritos t%s bytes en %s desde %p\n",trozos[4],trozos[2],dire);
+    			write(df,dire,atoi(trozos[4]));
+                        close(df);
+    		}
+        }
+}
+
+void funIo(){
+        if (numtrozos == 1)
+                printf("uso: e-s [read|write] ......\n");
+        else{
+                if(strcmp(trozos[1],"read")==0)
+                        do_I_O_read();
+                else if (strcmp(trozos[1],"write")==0)
+                        do_I_O_write();
+                else
+                        printf("uso: e-s [read|write] ......\n");
+        }
+}
 
 
 
