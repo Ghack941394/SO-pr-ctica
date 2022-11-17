@@ -979,6 +979,39 @@ ssize_t EscribirFichero (char *f, void *p, size_t cont,int overwrite){
    return n;
 }
 
+void do_I_O_write(){
+        void *p;
+        size_t cont=-1;
+        ssize_t n;
+
+        if ((numtrozos<5 && strcmp("-o",trozos[2])!=0) || (numtrozos<6 && strcmp("-o", trozos[2])==0)){
+                printf("faltan parametros\n");
+                return;
+        }else{  
+                if((strcmp(trozos[2],"-o")==0)){
+
+                        p=(void*) strtoul(trozos[4],NULL,16);
+                
+                        if (trozos[5]!=NULL)
+	                        cont=(size_t) atoll(trozos[5]);
+    		
+                        if((n=EscribirFichero(trozos[3], p, cont, 1))==-1){
+    		        	perror("Imposible escribir el fichero\n");
+                        }else
+    		                printf("escritos %s bytes en %s desde %p\n",trozos[5],trozos[3],p);
+  	        }else{
+    		        p=(void*) strtoul(trozos[3],NULL,16);
+                        if (trozos[4]!=NULL)
+	                        cont=(size_t) atoll(trozos[4]);
+    	        	if((n=EscribirFichero(trozos[2],p,cont,0))==-1){
+    		        	perror("Imposible  escribir el fichero\n");
+    			        return;
+    	        	}else
+    		        	printf("escritos %s bytes en %s desde %p\n",trozos[4],trozos[2],p);
+                }
+        }
+}
+
 void Do_pmap () /*sin argumentos*/
  { pid_t pid;       /*hace el pmap (o equivalente) del proceso actual*/
    char elpid[32];
@@ -1051,7 +1084,7 @@ void do_Deallocate(tListMem *L){
                 p = nextm(p,*L);            
         }
         if(p!=NULL){
-                d = getItemm(p,L);
+                d = getItemm(p,*L);
                 if( (strcmp("malloc", d.tipo) == 0) ){
                         free(d.direc);
                 }else if(strcmp("shared", d.tipo) == 0){
@@ -1170,38 +1203,6 @@ void funDealloc(tListMem *L){
                 printListMm(*L, "all"); 
 }
 
-void do_I_O_write(){
-        int df, per; //descriptor de ficheiro e permisos
-
-        if (numtrozos<6 || (numtrozos<5 && strcmp("-o", trozos[2])==0))
-                printf("faltan parametros\n");
-        else{
-                
-        if((strcmp(trozos[2],"-o")==0)){
-        
-    		per = O_WRONLY | O_CREAT | O_TRUNC;
-    		char *dire = (char*)strtoul(trozos[4],NULL,16);
-    		if((df=open(trozos[3], per, S_IRWXU | S_IRWXG | S_IRWXO))==-1){
-    			perror("imposible abrir el fichero\n");
-    		}else{
-    			printf("escritos t%s bytes en %s desde %p\n",trozos[5],trozos[3],dire);
-    			write(df,dire, atoi(trozos[5]));
-                        close(df);
-                }
-  	}
-        else
-    		per = O_WRONLY | O_CREAT | O_EXCL;
-    		char *dire = (char*)strtoul(trozos[3],NULL,16);
-    		if((df=open(trozos[2], per, S_IRWXU | S_IRWXG | S_IRWXO))==-1){
-    			perror("imposible abrir el fichero\n");
-    			return;
-    		}else{
-    			printf("escritos t%s bytes en %s desde %p\n",trozos[4],trozos[2],dire);
-    			write(df,dire,atoi(trozos[4]));
-                        close(df);
-    		}
-        }
-}
 
 //Función i-o para escribir ou leer dunha direccion a un fich e viceversa
 void funIo(){
