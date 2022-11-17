@@ -56,7 +56,7 @@ if (p==*L)
 *L = (*L)->next;
 else{
 if (p->next == NULL){
-  for (q =*L; q->next =! p; q->next);
+  for (q =*L; q->next != p; q=q->next);
   q->next = NULL;
 }
  else {

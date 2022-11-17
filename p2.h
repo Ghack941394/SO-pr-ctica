@@ -33,7 +33,7 @@ void funAyuda();
 void funPid();
 void funInfosis();
 void funCarpeta();
-void funFin(tList *L);
+void funFin(tList *L, tListMem *Lm);
 void funHist(tList *L);
 void funCreate();
 void funList();

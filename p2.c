@@ -247,8 +247,13 @@ void funAyuda(){
  *            
  * @return void.
  */
-void funFin(tList *listhistorial){
+void funFin(tList *listhistorial, tListMem *listmemoria){
         removeElement(listhistorial);
+        tPosMem p=firstm(*listmemoria);
+        while (p!=NULL){
+                removeElementm(listmemoria, p);
+                p = nextm(p,*listmemoria);
+        }       
         exit(0);
 }
 
@@ -754,9 +759,9 @@ void printListMm(tListMem L, char *tipo){
 			        if(strcmp(d.tipo,"shared")==0 || strcmp(d.tipo,"malloc")==0)
 				        printf("%s ",d.tipo);
                                 if (strcmp(d.tipo,"shared")==0)
-                                        printf("(key %d)", d.chave);      
+                                        printf("(key %d)", d.chave);  
+                                printf("\n");           
                         }
-                        printf("\n");
                         p = nextm(p, L);
 		}
         }
@@ -944,7 +949,7 @@ void do_I_O_read (){
 	printf ("faltan parametros\n");
 	return;
    }
-   p=(void*) strtoul(trozos[2],NULL,16) ;  /*convertimos de cadena a puntero*/
+   p=(void*) strtoul(trozos[3],NULL,16) ;  /*convertimos de cadena a puntero*/
    if (trozos[4]!=NULL)
 	cont=(size_t) atoll(trozos[4]);
 
@@ -1032,31 +1037,29 @@ void funAlloc(tListMem *L){
 }
 
 void do_Deallocate(tListMem *L){
-        char *direc;
+        char *dir;
         tPosMem p;
         tItemMem d;
 
-        if(sscanf(trozos[1],"0x%p",&direc)==0 || direc==NULL){
+        if(sscanf(trozos[1],"0x%p",&dir)==0 ){
                 perror("Dirección no válida\n"); return;
         }
         p = firstm(*L);
         while (p!=NULL){
-                d = getItemm(p,*L);
-                if (strcmp(direc, d.direc)==0)
+                if (strcmp(dir, d.direc)==0)
                         break;
                 p = nextm(p,*L);            
         }
-
         if(p!=NULL){
-
+                d = getItemm(p,L);
                 if( (strcmp("malloc", d.tipo) == 0) ){
-                        free(direc);
-                }else if(strcmp("mmap", d.tipo) == 0){
-                        munmap(direc, d.tam);
-                }else if( (strcmp("shared", d.tipo) == 0) ){
-                        shmdt(direc);
+                        free(d.direc);
+                }else if(strcmp("shared", d.tipo) == 0){
+                        shmdt(d.direc);
+                }else if( strcmp("mmap", d.tipo) == 0){
+                        munmap(d.direc, d.tam);
                 }else{
-                        puts(" ");
+                        printf("\n");
                 }
                 removeElementm(L,p);
         }else
@@ -1078,6 +1081,7 @@ void do_DeallocateMalloc(tListMem *L){
 
                 while (p!=NULL){
                         d = getItemm(p,*L);
+
                         if (strcmp(d.tipo,"malloc")==0)
                                 if (d.tam == tama )
                                         break;
@@ -1271,7 +1275,7 @@ int main(){
                                 }
                                 else if(strcmp(trozos[0], "fin") == 0 || strcmp(trozos[0], "bye") == 0 || strcmp(trozos[0], "salir") == 0){
                                         insertElement(d, &listhistorial);
-                                        funFin(&listhistorial);
+                                        funFin(&listhistorial, &listamemoria);
                                 }
                                 else if(strcmp(trozos[0], "allocate") == 0){
                                         insertElement(d, &listhistorial);
