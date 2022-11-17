@@ -898,10 +898,10 @@ void do_AllocateMmap(tListMem *L){
              printf ("fichero %s mapeado en %p\n", trozos[2], p);
      }
 }
-void do_DeallocateDelkey (char *args[]){
+void do_DeallocateDelkey (){
    key_t clave;
    int id;
-   char *key=args[0];
+   char *key=trozos[2];
 
    if (key==NULL || (clave=(key_t) strtoul(key,NULL,10))==IPC_PRIVATE){
         printf ("      delkey necesita clave_valida\n");
@@ -975,8 +975,6 @@ ssize_t EscribirFichero (char *f, void *p, size_t cont,int overwrite){
    return n;
 }
 
-
-
 void Do_pmap () /*sin argumentos*/
  { pid_t pid;       /*hace el pmap (o equivalente) del proceso actual*/
    char elpid[32];
@@ -994,8 +992,6 @@ void Do_pmap () /*sin argumentos*/
 
    }
  }
-
-
 
 //Aux malloc feita por nós 
 void do_AllocateMalloc(tListMem *L){
@@ -1036,6 +1032,142 @@ void funAlloc(tListMem *L){
         
 }
 
+void do_Deallocate(tListMem *L){
+        char *direc;
+        tPosMem p;
+        tItemMem d;
+
+        if(sscanf(trozos[1],"0x%p",&direc)==0 || direc==NULL)
+                perror("Dirección no válida\n");
+
+        p = firstm(L);
+        d = getItemm(p,L);
+        while (strcmp(direc, d.direc)!=0 && p!=NULL){
+                p = nextm(p,L);
+                d = getItemm(p,L);
+        }
+
+        if(p!=NULL){
+                d = getItemm(p,L);
+
+                if( (strcmp("malloc", d.tipo) == 0) ){
+                        free(direc);
+                }else if(strcmp("mmap", d.tipo) == 0){
+                        munmap(direc, d.tam);
+                }else if( (strcmp("shared", d.tipo) == 0) ){
+                        shmdt(direc);
+                }else{
+                        puts(" ");
+                }
+                removeElementm(L,p);
+        }else
+        	printf("Dirección %s no asignada con malloc, shared o mmap\n",trozos[1]);
+
+}
+
+void do_DeallocateMalloc(tListMem *L){
+        tPosMem p;
+        tItemMem d;
+
+        if (numtrozos == 2){
+                printListMm(L, "malloc");
+        }
+        else{
+                int tama = atoi(trozos[2]);
+        
+                p = firstm(L);
+
+                while (p!=NULL){
+                        d = getItemm(p,L);
+                        if (strcmp(d.tipo,"malloc")==0)
+                                if (d.tam == tama )
+                                        break;
+                        p = nextm(p,L);
+                }
+                if (p!=NULL){
+                        free(d.direc);
+                        removeElementm(L,p);
+                }
+                else
+                        printListMm(L, "malloc");
+        }
+
+}
+void do_DeallocateShared(tListMem *L){
+        tPosMem p;
+        tItemMem d;
+        int s;
+        if (numtrozos == 2)
+                printListMm(L,"shared");
+        else{
+                int chave = atoi(trozos[2]);
+                p = firstm(L);
+                //recoro alista para ver se atopo a chave 
+                while (p!=NULL){
+                        d = getItemm(p,L);
+                        if (strcmp(d.tipo,"shared") == 0){
+                                if (d.chave == chave)
+                                        break;
+                        }
+                        p = nextm(p,L);
+                }
+                //se a encontro 
+                if (p!=NULL){
+                        s = shmdt(d.direc);
+                        if (s!=-1){
+                                removeElementm(L,p);
+                        }else
+                                perror("shmdt: Imposible desmapear el bloque de memoria compartida\n");
+                }else // se non existe :
+                        printf("No hay bloque de esa clave mapeado en el proceso\n");
+        }
+        
+
+}
+
+void do_DeallocateMmap(tListMem *L){
+        tPosMem p;
+        tItemMem d;
+
+        if (numtrozos == 2)
+                printListMm(L,"mmap");
+        else{
+                p = firstm(L);
+                while (p!=NULL){
+                        d = getItemm(p,L);
+                        if(strcmp(d.tipo,"mmap")==0){
+                                if(strcmp(trozos[2],d.nomefich)==0)
+                                        break;
+                        }
+                        p = nextm(p,L);
+                }
+                if (p!=NULL){//se encotro o ficheiro na lista
+                        munmap(d.direc, d.tam);
+                        removeElementm(L, p);
+                }
+                else
+                        printf("Fichero %s no mapeado\n", trozos[2]);        
+        }
+}
+
+void funDealloc(tListMem *L){
+        if (numtrozos>1){
+                
+                if(strcmp("-malloc", trozos[1]) == 0)
+                        do_DeallocateMalloc(L);
+                else if(strcmp("-mmap", trozos[1]) == 0)
+                        do_DeallocateMmap(L);
+                else if((strcmp("-shared", trozos[1]) == 0))
+                        do_DeallocateShared(L);
+                else if((strcmp("-delkey", trozos[1]) == 0))
+                        do_DeallocateDelkey();
+                else{
+                        do_Deallocate(L);
+                }
+        }else
+                printListMm(*L, "all"); 
+
+}
 
 
 
@@ -1050,6 +1182,7 @@ void funAlloc(tListMem *L){
  * @param trozos array of strings
  * @return number of strings copied in trozos
  */
+
 int TrocearCadena(char * cadena, char * trozos[]){
         int i=1;
         if ((trozos[0]=strtok(cadena," \n\t"))==NULL)
@@ -1092,6 +1225,10 @@ int main(){
                                 else if(strcmp(trozos[0], "allocate") == 0){
                                         insertElement(d, &listhistorial);
                                         funAlloc(&listamemoria);
+                                        break;
+                                }else if(strcmp(trozos[0], "deallocate") == 0){
+                                        insertElement(d, &listhistorial);
+                                        funDealloc(&listamemoria);
                                         break;
                                 }
                                 else{

@@ -42,5 +42,5 @@ tItemMem getItemm(tPosMem p, tListMem L);
 
 bool insertElementm(tItemMem d, tListMem* L);
 
-void removeElementm(tListMem* L);
+void removeElementm(tListMem* L, tPosMem p);
 

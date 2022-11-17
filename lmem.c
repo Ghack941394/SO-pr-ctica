@@ -50,10 +50,21 @@ i = true; }
 return i;
 }
 
-void removeElementm(tListMem *L){
+void removeElementm(tListMem *L, tPosMem p){
 tPosMem q;
-while(*L != NULL){
-q = *L;
+if (p==*L)  
 *L = (*L)->next;
-free(q);}
+else{
+if (p->next == NULL){
+  for (q =*L; q->next =! p; q->next);
+  q->next = NULL;
+}
+ else {
+    q = p->next;
+    p->data = q->data;
+    p->next = q->next;
+    p = q;
+  } 
+}
+free(p);
 }
