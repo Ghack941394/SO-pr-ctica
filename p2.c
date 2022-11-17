@@ -1199,6 +1199,7 @@ void do_I_O_write(){
         }
 }
 
+//Función i-o para escribir ou leer dunha direccion a un fich e viceversa
 void funIo(){
         if (numtrozos == 1)
                 printf("uso: e-s [read|write] ......\n");
@@ -1212,6 +1213,14 @@ void funIo(){
         }
 }
 
+//Función recursiva de recursiva, chama n veces a función recursiva de parámetros
+void  funRecursiva(){
+        int n ;//parametro para invocar a función recursiva n veces 
+        if (numtrozos > 1){
+                n = atoi(trozos[1]);
+                Recursiva(n);
+        }
+}
 
 
 /**
