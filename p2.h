@@ -77,7 +77,7 @@ struct cmd comandos[] = {
         {"e/s",funIo},
         {"memdump", funMemDump},
         {"memfill", funMemFill},
-        {"recursiva",funRecursiva},
+        {"recurse",funRecursiva},
         {NULL,NULL},
 };
 
@@ -97,6 +97,16 @@ struct ax tabla[] = {
   {"list", " [-reca] [-recb] [-hid][-long][-link][-acc] n1 n2 ..	lista contenidos de directorios\n-hid: incluye los ficheros ocultos\n-reca: recursivo (antes)\n-recb: recursivo (despues)\nresto parametros como stat"},
   {"delete", " [name1 name2 ..] Borra ficheros o directorios vacios"},
   {"deltree", " [name1 name2 ..] Borra ficheros o directorios no vacios recursivamente"},
+  {"i-o","[read|write] [-o] fiche addr cont \nread fich addr cont: Lee cont bytes desde fich a addr\n write [-o] fich addr cont: Escribe cont bytes desde addr a fich. -o para sobreescribir\n	addr es una direccion de memoria"},
+  {"e-s","[read|write] [-o] fiche addr cont \nread fich addr cont: Lee cont bytes desde fich a addr\n write [-o] fich addr cont: Escribe cont bytes desde addr a fich. -o para sobreescribir\n	addr es una direccion de memoria"},
+  {"i/o","[read|write] [-o] fiche addr cont \nread fich addr cont: Lee cont bytes desde fich a addr\n write [-o] fich addr cont: Escribe cont bytes desde addr a fich. -o para sobreescribir\n	addr es una direccion de memoria"},
+  {"e/s","[read|write] [-o] fiche addr cont \nread fich addr cont: Lee cont bytes desde fich a addr\n write [-o] fich addr cont: Escribe cont bytes desde addr a fich. -o para sobreescribir\n	addr es una direccion de memoria"},
+  {"recurse","[n]	Invoca a la funcion recursiva n veces\n"},
+  {"allocate","[-malloc|-shared|-createshared|-mmap]... Asigna un bloque de memoria\n\t-malloc tam: asigna un bloque malloc de tamano tam\n\t-createshared cl tam: asigna (creando) el bloque de memoria compartida de clave cl y tamano tam\n\t-shared cl: asigna el bloque de memoria compartida (ya existente) de clave cl\n\t-mmap fich perm: mapea el fichero fich, perm son los permisos\n"},
+  {"deallocate","[-malloc|-shared|-delkey|-mmap|addr]..	Desasigna un bloque de memoria\n\t-malloc tam: desasigna el bloque malloc de tamano tam\n\t-shared cl: desasigna (desmapea) el bloque de memoria compartida de clave cl\n\t-delkey cl: elimina del sistema (sin desmapear) la clave de memoria cl\n\t-mmap fich: desmapea el fichero mapeado fich\n\taddr: desasigna el bloque de memoria en la direccion addr\n"},
+  {"memory","memory [-blocks|-funcs|-vars|-all|-pmap] ..	Muestra muestra detalles de la memoria del proceso\n-blocks: los bloques de memoria asignados\n-funcs: las direcciones de las funciones\n-vars: las direcciones de las variables\n-all: todo\n-pmap: muestra la salida del comando pmap(o similar)\n"},
+  {"memfill","addr cont byte 	Llena la memoria a partir de addr con byte"},
+  {"memdump", "addr cont 	Vuelca en pantallas los contenidos (cont bytes) de la posicion de memoria addr"},
   {NULL,NULL},
 };
 

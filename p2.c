@@ -223,7 +223,7 @@ void funAyuda(){
                                 break;
                         }
                         
-                        if (i >= 13){
+                        if (i >= 25){
                                  flagatopar = 1; 
                                  break;
                         }
@@ -237,6 +237,7 @@ void funAyuda(){
                 printf("1.autores\n2.pid\n3.carpeta\n4.fecha\n5.hist\n");
                 printf("6.infosis\n7.fin\n8.salir\n9.bye\n10.ayuda\n");
                 printf("11.create\n12.stat\n13.list\n14.delete\n15.deltree\n");
+                printf("16.allocate\n17.deallocate\n18.i-o, i/o, e-s, e/s\n19.memdump\n20.memfill\n21.memory\n22.recurse\n");
         } 
 }
 
