@@ -1,4 +1,6 @@
 make all --print-data-base --no-builtin-variables --no-builtin-rules --question
+make: *** No rule to make target 'all'.  Stop.
+
 # GNU Make 4.3
 # Built for x86_64-pc-linux-gnu
 # Copyright (C) 1988-2020 Free Software Foundation, Inc.
@@ -6,7 +8,7 @@ make all --print-data-base --no-builtin-variables --no-builtin-rules --question
 # This is free software: you are free to change and redistribute it.
 # There is NO WARRANTY, to the extent permitted by law.
 
-# Make data base, printed on Thu Nov 17 14:01:29 2022
+# Make data base, printed on Fri Nov 18 11:24:08 2022
 
 # Variables
 
@@ -61,7 +63,7 @@ VSCODE_CODE_CACHE_PATH = /home/grachela28/.config/Code/CachedData/6261075646f055
 # environment
 LANG = C
 # environment
-XAUTHORITY = /run/user/1000/.mutter-Xwaylandauth.QPZYV1
+XAUTHORITY = /run/user/1000/.mutter-Xwaylandauth.ZJN1V1
 # default
 .LOADED := 
 # default
@@ -97,7 +99,7 @@ SNAP_REEXEC =
 # automatic
 @F = $(notdir $@)
 # environment
-VSCODE_PID = 3742
+VSCODE_PID = 13098
 # environment
 XDG_SESSION_TYPE = wayland
 # automatic
@@ -105,7 +107,7 @@ XDG_SESSION_TYPE = wayland
 # environment
 BAMF_DESKTOP_FILE_HINT = /var/lib/snapd/desktop/applications/code_code.desktop
 # environment
-SESSION_MANAGER = local/Gmo-Lenovo:@/tmp/.ICE-unix/2213,unix/Gmo-Lenovo:/tmp/.ICE-unix/2213
+SESSION_MANAGER = local/Gmo-Lenovo:@/tmp/.ICE-unix/11107,unix/Gmo-Lenovo:/tmp/.ICE-unix/11107
 # automatic
 *F = $(notdir $*)
 # environment
@@ -155,7 +157,7 @@ LC_TIME = gl_ES.UTF-8
 # environment
 SNAP = /snap/code/113
 # environment
-INVOCATION_ID = 1959f9286feb4650aaf4f4ba2000442e
+INVOCATION_ID = 300a1bfec2b149a6813cc06ed72ebbec
 # environment
 SNAP_REVISION = 113
 # environment
@@ -193,7 +195,7 @@ SNAP_ARCH = amd64
 # makefile
 .DEFAULT_GOAL := p2
 # environment
-SYSTEMD_EXEC_PID = 2252
+SYSTEMD_EXEC_PID = 11148
 # environment
 DISPLAY = :0
 # environment
@@ -207,11 +209,11 @@ SNAP_DATA = /var/snap/code/113
 # environment
 SNAP_CONTEXT = mOQFhLwS4BUffgx9pHmKbzSJULCQsrzLdBkZJHElBq5NejLRM0us
 # environment
-MANAGERPID = 1980
+MANAGERPID = 10822
 # environment
 LC_MEASUREMENT = gl_ES.UTF-8
 # environment
-GIO_LAUNCHED_DESKTOP_FILE_PID = 3694
+GIO_LAUNCHED_DESKTOP_FILE_PID = 13049
 # environment
 _ = /snap/code/113/usr/share/code/code
 # environment
@@ -221,7 +223,7 @@ XDG_RUNTIME_DIR = /run/user/1000
 # environment
 GDK_PIXBUF_MODULE_FILE = /home/grachela28/snap/code/common/.cache/gdk-pixbuf-loaders.cache
 # environment
-JOURNAL_STREAM = 8:31464
+JOURNAL_STREAM = 8:103675
 # environment
 XDG_SESSION_CLASS = user
 # environment
@@ -277,9 +279,10 @@ SNAP_LIBRARY_PATH = /var/lib/snapd/lib/gl:/var/lib/snapd/lib/gl32:/var/lib/snapd
 
 # Directories
 
-# . (device 66309, inode 7216961): 19 files, no impossibilities.
+ 
+# . (device 66309, inode 7216961): 20 files, no impossibilities.
 
-# 19 files, no impossibilities in 1 directories.
+# 20 files, no impossibilities in 1 directories.
 
 # Implicit Rules
 
@@ -308,9 +311,6 @@ lmem.h:
 #  File has not been updated.
 
 p2.o: p2.h p2.c
- 
-make: *** No rule to make target 'all'.  Stop.
-
 #  Implicit rule search has not been done.
 #  Modification time never checked.
 #  File has not been updated.
@@ -391,12 +391,12 @@ historial.h:
 
 # No general ('VPATH' variable) search path.
 
-# strcache buffers: 1 (0) / strings = 25 / storage = 185 B / avg = 7 B
-# current buf: size = 8162 B / used = 185 B / count = 25 / avg = 7 B
+# strcache buffers: 1 (0) / strings = 26 / storage = 189 B / avg = 7 B
+# current buf: size = 8162 B / used = 189 B / count = 26 / avg = 7 B
 
-# strcache performance: lookups = 47 / hit rate = 46%
+# strcache performance: lookups = 48 / hit rate = 45%
 # hash-table stats:
-# Load=25/8192=0%, Rehash=0, Collisions=0/47=0%
-# Finished Make data base on Thu Nov 17 14:01:29 2022
+# Load=26/8192=0%, Rehash=0, Collisions=0/48=0%
+# Finished Make data base on Fri Nov 18 11:24:08 2022
 
  

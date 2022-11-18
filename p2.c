@@ -736,6 +736,25 @@ void LlenarMemoria (void *p, size_t cont, unsigned char byte){
 		arr[i]=byte;
 }
 
+void Do_pmap () /*sin argumentos*/
+ { pid_t pid;       /*hace el pmap (o equivalente) del proceso actual*/
+   char elpid[32];
+   char *argv[4]={"pmap",elpid,NULL};
+   
+   sprintf (elpid,"%d", (int) getpid());
+   if ((pid=fork())==-1){
+      perror ("Imposible crear proceso");
+      return;
+      }
+   if (pid==0){
+      if (execvp(argv[0],argv)==-1)
+         perror("cannot execute pmap (linux, solaris)");
+
+
+   }
+ }
+
+
 
 //Función para printar Lista de alloc/delloc
 void printListMm(tListMem L, char *tipo){
@@ -796,6 +815,9 @@ void AuxInsertElememMem(void *dire, int tam, char *tipo, int chave, char *nfich,
         insertElementm(d, L);
 }
 
+
+
+//Auxiliar dada para obtener segmento de memoria
 void * ObtenerMemoriaShmget (key_t clave, size_t tam, int flag, tListMem *L){ //flag para insertar na lista o tamaño segun se é created = 0 ou shared = 1
     void * p;
     int aux,id,flags=0777;
@@ -804,23 +826,23 @@ void * ObtenerMemoriaShmget (key_t clave, size_t tam, int flag, tListMem *L){ //
         flags=flags | IPC_CREAT | IPC_EXCL;
     if (clave==IPC_PRIVATE)  /*no nos vale*/
         {errno=EINVAL; return NULL;}
-    if ((id=shmget(clave, tam, flags))==-1)
+    if ((id=shmget(clave, tam, flags))==-1)//Se non podo encontrar ese seg. de memoria , null, se si, identificador
         return (NULL);
-    if ((p=shmat(id,NULL,0))==(void*) -1){
+    if ((p=shmat(id,NULL,0))==(void*) -1){// unha vez que sei o identificador, miro a ver cal é a súa dir de memoria
         aux=errno;
-        if (tam || s.shm_segsz)
-             shmctl(id,IPC_RMID,NULL);
+        if (tam || s.shm_segsz) // se o tam non é cero : (Nota: cando é shared só teño a chave, por ende para obter o tamaña uso s.shm_segz)
+             shmctl(id,IPC_RMID,NULL); // permite que poda recibir a info so segmento
         errno=aux;
         return (NULL);
     }
-    shmctl (id,IPC_STAT,&s);
+    shmctl (id,IPC_STAT,&s);// permite que poda recibir a info so segmento
     if(flag)
         tam = s.shm_segsz;
     AuxInsertElememMem(p,tam,"shared",clave,NULL,-1,L);
     return (p);
 }
 
-//Función para facer o allocate tanto shared como createshared
+//Función auxiliar dada para facer o allocate tanto shared como createshared
 void do_AllocateCreateshared (tListMem *L){
    key_t cl;
    size_t tam;
@@ -828,7 +850,7 @@ void do_AllocateCreateshared (tListMem *L){
    tPosMem p = firstm(*L);
    int flagCreate = 0;
    int flagShared = 0;
-   //flags para distinguir cando crear e cando compartir memoria
+   //flags para distinguir cando crear chave  e asignar segmento de me compartida ou só asignar
    if(strcmp(trozos[1],"-shared")==0)
         flagShared = 1;
    if(strcmp(trozos[1],"-createshared")==0)
@@ -840,20 +862,20 @@ void do_AllocateCreateshared (tListMem *L){
    else{
         cl=(key_t)  strtoul(trozos[2],NULL,10);
         if(trozos[3]!=NULL) 
-                tam=(size_t) strtoul(trozos[3],NULL,10);
+                tam=(size_t) strtoul(trozos[3],NULL,10); // para convertilo nun unsigned lon
         else
                 tam=0;
-        if (tam==0 && flagCreate) {
+        if (tam==0 && flagCreate) { //se me pasan 0 bytes
 	        perror("No se asignan bloques de 0 bytes\n");
 	        return;
         }
-        if (flagCreate){
+        if (flagCreate){ // se teño que crear chave
                 if ((p=ObtenerMemoriaShmget(cl,tam,0,L))!=NULL)
 		        printf ("Asignados %lu bytes en %p\n",(unsigned long) tam, p);
                 else
 	        	printf("Imposible asignar memoria compartida clave %lu:%s\n",(unsigned long) cl,strerror(errno));
         }
-        if (flagShared){
+        if (flagShared){//Se non
                 if ((p=ObtenerMemoriaShmget(cl,tam,1,L))!=NULL)
                         printf("Memoria compartida de clave %lu en %p\n",(unsigned long) cl,p);             
                 else
@@ -862,6 +884,7 @@ void do_AllocateCreateshared (tListMem *L){
         }
 }
 
+//Función auxiliar dada para mapear ficheiros, devolve NULL en caso de erro
 
 void * MapearFichero (char * fichero, int protection, tListMem *L){
     int df, map=MAP_PRIVATE,modo=O_RDONLY;
@@ -870,10 +893,10 @@ void * MapearFichero (char * fichero, int protection, tListMem *L){
     int tam;
 
     if (protection&PROT_WRITE)
-          modo=O_RDWR;
+          modo=O_RDWR; // podo ler e escribir se teño permisos
     if (stat(fichero,&s)==-1 || (df=open(fichero, modo))==-1)
           return NULL;
-    if ((p=mmap (NULL,s.st_size, protection,map,df,0))==MAP_FAILED)
+    if ((p=mmap (NULL,s.st_size, protection,map,df,0))==MAP_FAILED) //se podo 
            return NULL;
     
     tam = s.st_size; //gardo o tamaño do ficheiro na variable tam
@@ -881,6 +904,8 @@ void * MapearFichero (char * fichero, int protection, tListMem *L){
 
     return p;
 }
+
+//Aux mmap dada
 void do_AllocateMmap(tListMem *L){ 
      char *perm;
      void *p;
@@ -897,138 +922,12 @@ void do_AllocateMmap(tListMem *L){
             if (strchr(perm,'w')!=NULL) protection|=PROT_WRITE;
             if (strchr(perm,'x')!=NULL) protection|=PROT_EXEC;
         }
-        if ((p=MapearFichero(trozos[2],protection, L))==NULL)
+        if ((p=MapearFichero(trozos[2],protection, L))==NULL)// Se non podo mapear
              perror ("Imposible mapear fichero");
-        else
+        else // Se sí :
              printf ("fichero %s mapeado en %p\n", trozos[2], p);
      }
 }
-void do_DeallocateDelkey (){
-   key_t clave;
-   int id;
-   char *key=trozos[2];
-
-   if (key==NULL || (clave=(key_t) strtoul(key,NULL,10))==IPC_PRIVATE){
-        printf ("      delkey necesita clave_valida\n");
-        return;
-   }
-   if ((id=shmget(clave,0,0666))==-1){
-        perror ("shmget: imposible obtener memoria compartida");
-        return;
-   }
-   if (shmctl(id,IPC_RMID,NULL)==-1)
-        perror ("shmctl: imposible eliminar memoria compartida\n");
-}
-
-
-
-ssize_t LeerFichero (char *f, void *p, size_t cont){
-   struct stat s;
-   ssize_t  n;  
-   int df,aux;
-
-   if (stat (f,&s)==-1 || (df=open(f,O_RDONLY))==-1)
-	return -1;     
-   if (cont==-1)   /* si pasamos -1 como bytes a leer lo leemos entero*/
-	cont=s.st_size;
-   if ((n=read(df,p,cont))==-1){
-	aux=errno;
-	close(df);
-	errno=aux;
-	return -1;
-   }
-   close (df);
-   return n;
-}
-
-void do_I_O_read (){
-   void *p;
-   size_t cont=-1;
-   ssize_t n;
-   if (numtrozos<5){
-	printf ("faltan parametros\n");
-	return;
-   }
-   p=(void*) strtoul(trozos[3],NULL,16) ;  /*convertimos de cadena a puntero*/
-   if (trozos[4]!=NULL)
-	cont=(size_t) atoll(trozos[4]);
-
-   if ((n=LeerFichero(trozos[2],p,cont))==-1)
-	perror ("Imposible leer fichero");
-   else
-	printf ("leidos %lld bytes de %s en %p\n",(long long) n,trozos[2],p);
-}
-
-ssize_t EscribirFichero (char *f, void *p, size_t cont,int overwrite){
-   ssize_t  n;
-   int df,aux, flags=O_CREAT | O_EXCL | O_WRONLY;
-
-   if (overwrite)
-	flags=O_CREAT | O_WRONLY | O_TRUNC;
-
-   if ((df=open(f,flags,0777))==-1)
-	return -1;
-
-   if ((n=write(df,p,cont))==-1){
-	aux=errno;
-	close(df);
-	errno=aux;
-	return -1;
-   }
-   close (df);
-   return n;
-}
-
-void do_I_O_write(){
-        void *p;
-        size_t cont=-1;
-        ssize_t n;
-
-        if ((numtrozos<5 && strcmp("-o",trozos[2])!=0) || (numtrozos<6 && strcmp("-o", trozos[2])==0)){
-                printf("faltan parametros\n");
-                return;
-        }else{  
-                if((strcmp(trozos[2],"-o")==0)){
-
-                        p=(void*) strtoul(trozos[4],NULL,16);
-                
-                        if (trozos[5]!=NULL)
-	                        cont=(size_t) atoll(trozos[5]);
-    		
-                        if((n=EscribirFichero(trozos[3], p, cont, 1))==-1){
-    		        	perror("Imposible escribir el fichero\n");
-                        }else
-    		                printf("escritos %s bytes en %s desde %p\n",trozos[5],trozos[3],p);
-  	        }else{
-    		        p=(void*) strtoul(trozos[3],NULL,16);
-                        if (trozos[4]!=NULL)
-	                        cont=(size_t) atoll(trozos[4]);
-    	        	if((n=EscribirFichero(trozos[2],p,cont,0))==-1){
-    		        	perror("Imposible  escribir el fichero\n");
-    			        return;
-    	        	}else
-    		        	printf("escritos %s bytes en %s desde %p\n",trozos[4],trozos[2],p);
-                }
-        }
-}
-
-void Do_pmap () /*sin argumentos*/
- { pid_t pid;       /*hace el pmap (o equivalente) del proceso actual*/
-   char elpid[32];
-   char *argv[4]={"pmap",elpid,NULL};
-   
-   sprintf (elpid,"%d", (int) getpid());
-   if ((pid=fork())==-1){
-      perror ("Imposible crear proceso");
-      return;
-      }
-   if (pid==0){
-      if (execvp(argv[0],argv)==-1)
-         perror("cannot execute pmap (linux, solaris)");
-
-
-   }
- }
 
 //Aux malloc feita por nós 
 void do_AllocateMalloc(tListMem *L){
@@ -1037,7 +936,7 @@ void do_AllocateMalloc(tListMem *L){
         if (trozos[2]!=NULL){
                 tama = atoi(trozos[2]); // para pasar o string a enteiro
                 if (tama>0){
-                        if ((dire = malloc(tama))!=NULL){
+                        if ((dire = malloc(tama))!=NULL){ // se poodo asignar memoria
                                 AuxInsertElememMem(dire, tama, "malloc", 0 ,NULL,-1, L);
                                 printf("Asignados %d bytes en %p\n", tama, dire);
                         }else
@@ -1051,6 +950,7 @@ void do_AllocateMalloc(tListMem *L){
         }else
                  printListMm(*L,"malloc");
 }
+
 
 //Función para opcións do allocate
 void funAlloc(tListMem *L){      
@@ -1069,22 +969,48 @@ void funAlloc(tListMem *L){
         
 }
 
+//Aux delkey dada para borrar as chaves creadas con createshared 
+void do_DeallocateDelkey (){
+   key_t clave;
+   int id;
+   char *key=trozos[2];
+
+   if (key==NULL || (clave=(key_t) strtoul(key,NULL,10))==IPC_PRIVATE){
+        printf ("      delkey necesita clave_valida\n");
+        return;
+   }
+   if ((id=shmget(clave,0,0666))==-1){
+        perror ("shmget: imposible obtener memoria compartida");
+        return;
+   }
+   if (shmctl(id,IPC_RMID,NULL)==-1) //establezco con shmctl que a chave que teña ese identificador sexa borrada ( con ipc_rmid) 
+        perror ("shmctl: imposible eliminar memoria compartida\n");
+}
+
+
+//Aux xeral dealloc para deasignar o bloque de memoria que teña a dirección dada por parámetro 
+
 void do_Deallocate(tListMem *L){
         char *dir;
         tPosMem p;
         tItemMem d;
 
-        if(sscanf(trozos[1],"0x%p",&dir)==0 ){
+        if(sscanf(trozos[1],"0x%p",&dir)==0 ){ // comprobo se a dir que me dan é valida
                 perror("Dirección no válida\n"); return;
         }
+
+        if(!isEmptyListm(*L)){
         p = firstm(*L);
-        while (p!=NULL){
-                if (strcmp(dir, d.direc)==0)
+
+        while (p!=NULL){// recorro a lista para ver se teño esa dirección
+                d = getItemm(p,*L);
+                if (strcmp(dir, d.direc)==0) // salgo se a encontro
                         break;
                 p = nextm(p,*L);            
         }
-        if(p!=NULL){
-                d = getItemm(p,*L);
+        
+        if(p!=NULL){ // se p non é null porque encontrouse a dirección e existe na miña lista
+                
                 if( (strcmp("malloc", d.tipo) == 0) ){
                         free(d.direc);
                 }else if(strcmp("shared", d.tipo) == 0){
@@ -1097,9 +1023,11 @@ void do_Deallocate(tListMem *L){
                 removeElementm(L,p);
         }else
         	printf("Dirección %s no asignada con malloc, shared o mmap\n",trozos[1]);
-
+        }else
+        	printf("Dirección %s no asignada con malloc, shared o mmap\n",trozos[1]);
 }
 
+//Aux  dealloc con malloc para deasignar o bloque de memoria que teña x tamaño dado
 void do_DeallocateMalloc(tListMem *L){
         tPosMem p;
         tItemMem d;
@@ -1115,8 +1043,8 @@ void do_DeallocateMalloc(tListMem *L){
                 while (p!=NULL){
                         d = getItemm(p,*L);
 
-                        if (strcmp(d.tipo,"malloc")==0)
-                                if (d.tam == tama )
+                        if (strcmp(d.tipo,"malloc")==0) // como recorro toda a lista teño que indicar que me mire se é malloc
+                                if (d.tam == tama )// Se encontra un tamaño igual, colleme ese para borralo
                                         break;
                         p = nextm(p,*L);
                 }
@@ -1129,6 +1057,7 @@ void do_DeallocateMalloc(tListMem *L){
         }
 
 }
+//Aux  dealloc con shared para deasignar o bloque de memoria compartida que teña x chave dada
 void do_DeallocateShared(tListMem *L){
         tPosMem p;
         tItemMem d;
@@ -1138,7 +1067,7 @@ void do_DeallocateShared(tListMem *L){
         else{
                 int chave = atoi(trozos[2]);
                 p = firstm(*L);
-                //recoro alista para ver se atopo a chave 
+                //recoro a lista para ver se atopo a chave 
                 while (p!=NULL){
                         d = getItemm(p,*L);
                         if (strcmp(d.tipo,"shared") == 0){
@@ -1160,6 +1089,7 @@ void do_DeallocateShared(tListMem *L){
 
 }
 
+//Aux  dealloc con mmap para deasignar o bloque de memoria que teña  asignado ese ficheiro dado
 void do_DeallocateMmap(tListMem *L){
         tPosMem p;
         tItemMem d;
@@ -1168,7 +1098,7 @@ void do_DeallocateMmap(tListMem *L){
                 printListMm(*L,"mmap");
         else{
                 p = firstm(*L);
-                while (p!=NULL){
+                while (p!=NULL){ // recorro a lista para ver se alunha dirección ten ese fich
                         d = getItemm(p,*L);
                         if(strcmp(d.tipo,"mmap")==0){
                                 if(strcmp(trozos[2],d.nomefich)==0)
@@ -1185,6 +1115,8 @@ void do_DeallocateMmap(tListMem *L){
         }
 }
 
+
+//Función para opcións do deallocate
 void funDealloc(tListMem *L){
         if (numtrozos>1){
                 
@@ -1204,19 +1136,118 @@ void funDealloc(tListMem *L){
 }
 
 
+//Funcións para o comando i-o 
+
+//Función auxiliar dada por SO para ler ficheiros
+ssize_t LeerFichero (char *f, void *p, size_t cont){
+   struct stat s;
+   ssize_t  n;  
+   int df,aux;
+
+   if (stat (f,&s)==-1 || (df=open(f,O_RDONLY))==-1)//se non se pode abrir 
+	return -1;     
+   if (cont==-1)   /* si pasamos -1 como bytes a leer lo leemos entero*/
+	cont=s.st_size;
+   if ((n=read(df,p,cont))==-1){ // se non se pode ler
+	aux=errno;
+	close(df);
+	errno=aux;
+	return -1;
+   }
+   close (df);
+   return n;
+}
+
+//Opción read do comando i-o 
+void do_I_O_read (){
+   void *p;
+   size_t cont=-1;
+   ssize_t n;
+   if (numtrozos<5){
+	printf ("faltan parametros\n");
+	return;
+   }
+   p=(void*) strtoul(trozos[3],NULL,16) ;  /*convertimos de cadena a puntero*/
+   if (trozos[4]!=NULL) //Comprobación para que non dei erro atoll
+	cont=(size_t) atoll(trozos[4]); // atoll pasa de string a  long
+
+   if ((n=LeerFichero(trozos[2],p,cont))==-1) //Se temos algún erro ao  ler 
+	perror ("Imposible leer fichero");
+   else //Se non lemos 
+	printf ("leidos %lld bytes de %s en %p\n",(long long) n,trozos[2],p);
+}
+
+//Función auxiliar dada por SO para escribir/sobrescribir ficheiros
+ssize_t EscribirFichero (char *f, void *p, size_t cont,int overwrite){
+   ssize_t  n;
+   int df,aux, flags=O_CREAT | O_EXCL | O_WRONLY; 
+
+   if (overwrite) // se teño a opción -o de sobrescribir 
+	flags=O_CREAT | O_WRONLY | O_TRUNC; //doulle estes permisos , porque O_TRUNC permite que un ficheiro existente trunque a lonxitude
+        //se non , quedome con O_EXCL que combinado co de creación solta unn erro se xa existe o ficheiro
+   if ((df=open(f,flags,0777))==-1)
+	return -1;
+
+   if ((n=write(df,p,cont))==-1){//escribo fich
+	aux=errno;
+	close(df);
+	errno=aux;
+	return -1;
+   }
+   close (df);
+   return n;
+}
+
+//Opción write do comando i-o 
+void do_I_O_write(){
+        void *p;
+        size_t cont=-1;
+        ssize_t n;
+
+        if ((numtrozos<5 && strcmp("-o",trozos[2])!=0) || (numtrozos<6 && strcmp("-o", trozos[2])==0)){
+                printf("faltan parametros\n");
+                return;
+        }else{  
+                if((strcmp(trozos[2],"-o")==0)){ // Se teño a opción de sobrescribir
+
+                        p=(void*) strtoul(trozos[4],NULL,16); // paso a cadea a punteiro
+                
+                        if (trozos[5]!=NULL) //paso o número de bytes a ler de cadea a long
+	                        cont=(size_t) atoll(trozos[5]);
+    		
+                        if((n=EscribirFichero(trozos[3], p, cont, 1))==-1){ // Se falla a escfritura:
+    		        	perror("Imposible escribir el fichero\n");
+                        }else// Se non, escribo
+    		                printf("escritos %s bytes en %s desde %p\n",trozos[5],trozos[3],p);
+  	        }else{ //Se non sobreescribo
+                //Fago o mesmo pero con trozos nunha posición menos porque non teño -o
+    		        p=(void*) strtoul(trozos[3],NULL,16);
+                        if (trozos[4]!=NULL)
+	                        cont=(size_t) atoll(trozos[4]);
+    	        	if((n=EscribirFichero(trozos[2],p,cont,0))==-1){
+    		        	perror("Imposible  escribir el fichero\n");
+    			        return;
+    	        	}else
+    		        	printf("escritos %s bytes en %s desde %p\n",trozos[4],trozos[2],p);
+                }
+        }
+}
+
+
 //Función i-o para escribir ou leer dunha direccion a un fich e viceversa
 void funIo(){
         if (numtrozos == 1)
                 printf("uso: e-s [read|write] ......\n");
         else{
-                if(strcmp(trozos[1],"read")==0)
+                if(strcmp(trozos[1],"read")==0) //para ler
                         do_I_O_read();
-                else if (strcmp(trozos[1],"write")==0)
+                else if (strcmp(trozos[1],"write")==0) // para escribir
                         do_I_O_write();
                 else
                         printf("uso: e-s [read|write] ......\n");
         }
 }
+
 
 //Función recursiva de recursiva, chama n veces a función recursiva de parámetros
 void  funRecursiva(){
