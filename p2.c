@@ -1257,30 +1257,30 @@ void funMemDump(){
     char *dir;
 
     if (trozos[2] == NULL){
-        bytes = 25;              //Si no especifican cont, mostramos los 25 primeros bytes
+        bytes = 25;              //si no especifican cont, mostramos los 25 primeros bytes
     } else {
         bytes = atoi(trozos[2]); //convertimos el string de los bytes a volcar en int
     }
 
-    dir = (char *) strtoul(trozos[1], NULL, 16); //Guardamos en dir la conversion a base 16 de la direccion que recibimos
+    dir = (char *) strtoul(trozos[1], NULL, 16); //guardamos en dir la conversion a base 16 de la direccion que recibimos
     
-    printf("Volcando %d bytes desde la direccion %p", bytes, dir);
+    printf("Volcando %d bytes desde la direccion %p\n", bytes, dir);
 
     while (cont < bytes) {
 
-        if (isprint(dir[cont])){              // 
-                printf("%2c ", dir[cont]);
+        if (isprint(dir[cont])){             //comprueba si un carácter es un carácter imprimible o no             
+                printf("%2c ", dir[cont]);   //imprimos los caracteres
         }
         else{
-                printf("   ");
+                printf("   ");               //si no es un caracter imprimible, un espacio 
         } 
         cont++;
 
-        if (cont % 25 == 0 || cont >= bytes) {
+        if (cont % 25 == 0 || cont >= bytes) {  //cada vez que llega a 24 comenzando en 0 se pasa a la siguiente linea
             printf("\n");
-            
+            cont1 = 0;
             while (cont1 < 25 && cont2 < bytes) {
-                printf("%02x ", (unsigned char) dir[cont2]);
+                printf("%02x ", (unsigned char) dir[cont2]); //imprimimos el char en hexadecimal 
                 cont2++;
                 cont1++;
             }
@@ -1294,39 +1294,39 @@ void funMemDump(){
 void funMemFill(){
         int tam = 128;
         char *dir;
-        char word = 'A';
-        int character;
+        char word = 'A';        //por defecto si no se le pasa ninguna letra es A 
+        int character;          //variable que indica en que posicion se encuentra el char
 
-        if(numtrozos != 1 && numtrozos < 5){     //memfill addr cont byte    Llena la memoria a partir de addr con byte
-                dir = (char*) strtol(trozos[1], NULL, 16);
+        if(numtrozos != 1 && numtrozos < 5){                  
+                dir = (char*) strtol(trozos[1], NULL, 16);                      //guardamos en dir la conversion a base 16 de la direccion que recibimos
         
                 if(numtrozos == 2){
-                        LlenarMemoria(dir, tam, word);
+                        LlenarMemoria(dir, tam, word);                          //solo se le pasa la direccion 
                         return;
                 }
                 
                 if(numtrozos == 3){
-                        tam = atoi(trozos[2]);
-                        if(tam != 0){
-                                LlenarMemoria(dir, tam, word);
+                        tam = atoi(trozos[2]);                                  //convierte el string en un entero y lo metemos en tam 
+                        if(tam != 0){                        
+                                LlenarMemoria(dir, tam, word);                  //se le pasa direccion y numero de bytes con los que llenamos 
                                 return;
                         }
-                        character = 2;
+                        character = 2;                                  
                         tam = 128;
                 }         
                         
                 if(numtrozos == 4){
-                        tam = atoi(trozos[2]);
+                        tam = atoi(trozos[2]);                                  //convierte el tam en int 
                         character = 3;
                 } 
 
-                if(trozos[character][1] == 'x') {
-                        word = (char) strtol(trozos[character], NULL, 16);
+                if(trozos[character][1] == 'x') {                               //miramos si esta pasado en hexadecimal
+                        word = (char) strtol(trozos[character], NULL, 16);      //guardamos en word la conversion del num a hexadecinal (tabla assci) que recibimos
                 } else {
-                        word = (char) trozos[character][0];
+                        word = (char) trozos[character][0];                     //pasamos el char 
                 }
 
-                LlenarMemoria(dir, tam, word);              
+                LlenarMemoria(dir, tam, word);                                  //pasamos todo
         } else {
                 printf("Numero de argumentos invalidados\n");
         }
@@ -1343,25 +1343,35 @@ void funMemory(tListMem *L){
         static int num = 6;
         static char characters = 'b';
         static double decimal = 1.;
-        
-        if(numtrozos == 1  || strcmp ( trozos[1], "-blocks") == 0 || strcmp(trozos[1], "-all") == 0){
-                printListMm(*L, "all"); 
-                // funAlloc(L);     
-        } 
 
-        if(strcmp ( trozos[0], "memory") == 0 || strcmp( trozos[1], "-funcs") == 0 || strcmp(trozos[1], "-all") == 0){
-                printf("Funciones programa      %p,    %p,     %p\n"
-                       "Funciones libreria      %p,    %p,     %p\n", &funDelete, &funMemDump, &funAlloc, &printf, &malloc, &strcmp);        
-        }
 
-        if(strcmp ( trozos[0], "memory") == 0 ||strcmp(trozos[1], "-vars") == 0 || (strcmp(trozos[1], "-all") == 0)){
-                printf("Variables locales        %p,    %p,     %p\n"
-                       "Variables globales       %p,    %p,     %p\n"
-                       "Variables estaticas      %p,    %p,     %p\n", &numero, &character, &decimales, &L, &numtrozos, &memory, &num, &characters, &decimal);
+        if(numtrozos == 1){             //solo si pasamos "memory" 
+               printListMm(*L, "all");
+               printf("Funciones programa       %p,    %p,     %p\n"
+                      "Funciones libreria       %p,    %p,     %p\n", &funDelete, &funMemDump, &funAlloc, &printf, &malloc, &strcmp); 
+               printf("Variables locales        %p,    %p,     %p\n"
+                      "Variables globales       %p,    %p,     %p\n"
+                      "Variables estaticas      %p,    %p,     %p\n", &numero, &character, &decimales, &L, &numtrozos, &memory, &num, &characters, &decimal);           
+        } else if (numtrozos > 1){  
+                if(strcmp ( trozos[1], "-blocks") == 0 || strcmp(trozos[1], "-all") == 0){
+                        printListMm(*L, "all");      
+                } 
+
+                if(strcmp( trozos[1], "-funcs") == 0 || strcmp(trozos[1], "-all") == 0){
+                        printf("Funciones programa      %p,    %p,     %p\n"
+                               "Funciones libreria      %p,    %p,     %p\n", &funDelete, &funMemDump, &funAlloc, &printf, &malloc, &strcmp);        
+                }
+
+                if(strcmp(trozos[1], "-vars") == 0 || (strcmp(trozos[1], "-all") == 0)){
+                        printf("Variables locales        %p,    %p,     %p\n"
+                               "Variables globales       %p,    %p,     %p\n"
+                               "Variables estaticas      %p,    %p,     %p\n", &numero, &character, &decimales, &L, &numtrozos, &memory, &num, &characters, &decimal);
+                }
+                
+                if(strcmp(trozos[1], "-pmap") == 0){
+                        Do_pmap();
+                }        
         }
-        if(numtrozos > 1 && (strcmp(trozos[1], "-pmap") == 0)){
-                Do_pmap();
-        } 
 }
 
 
@@ -1435,8 +1445,7 @@ int main(){
                                         insertElement(d, &listhistorial);
                                         funDealloc(&listamemoria);
                                         break;
-                                }else if (strcmp(trozos[0], "memory") == 0)
-                                {
+                                }else if (strcmp(trozos[0], "memory") == 0){
                                         insertElement(d, &listhistorial);
                                         funMemory(&listamemoria);
                                         break;
