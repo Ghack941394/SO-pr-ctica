@@ -1249,6 +1249,8 @@ void funIo(){
 }
 
 
+
+
 //Función recursiva de recursiva, chama n veces a función recursiva de parámetros
 void  funRecursiva(){
         int n ;//parametro para invocar a función recursiva n veces 
