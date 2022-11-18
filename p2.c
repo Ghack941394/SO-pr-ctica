@@ -14,13 +14,14 @@ char *trozos[MAXTROZOS]; //Array para guardar y luego leer lo cada uno de los tr
 int numtrozos;           //Lleva la cuenta del numero de palabras introducidas
 char linea[MAXLINEA];    //Guarda absolutamente todo lo escrito por terminal 
 char ruta[PATH_MAX];     //Array para guardar el path 
-
+char memory;             //utilizada como variable global en el memory 
 
 /**
  * Function: funAutores
  * ----------------------
  * Prints the names and logins
- * of the program autors. 
+ * of the program au malloc 
+tors. 
  *
  * Opcions: 
  *      [-l] Prints only the logins. 
@@ -728,18 +729,19 @@ void Recursiva (int n){
 }
 
 
-void LlenarMemoria (void *p, size_t cont, unsigned char byte){
-  unsigned char *arr=(unsigned char *) p;
-  size_t i;
+void LlenarMemoria(char *dir, int tam, char character){
+  int i;
 
-  for (i=0; i<cont;i++)
-		arr[i]=byte;
+  printf("Llenando %d bytes de memoria con el char '%c' a partir de la direccion %p\n", tam, character, dir);
+
+  for (i = 0; i < tam; i++)
+		dir[i] = character;            
 }
 
 void Do_pmap () /*sin argumentos*/
  { pid_t pid;       /*hace el pmap (o equivalente) del proceso actual*/
    char elpid[32];
-   char *argv[4]={"pmap",elpid,NULL};
+   char *argv[3]={"pmap",elpid,NULL};
    
    sprintf (elpid,"%d", (int) getpid());
    if ((pid=fork())==-1){
@@ -747,11 +749,12 @@ void Do_pmap () /*sin argumentos*/
       return;
       }
    if (pid==0){
-      if (execvp(argv[0],argv)==-1)
+      if (execvp(argv[0],argv)==-1){
          perror("cannot execute pmap (linux, solaris)");
-
-
+      }
+      exit(1);
    }
+   waitpid(pid, NULL, 0);
  }
 
 
@@ -770,8 +773,11 @@ void printListMm(tListMem L, char *tipo){
                 tPosMem p = firstm(L);
                 tItemMem d;
                 while (p!=NULL){
+                        printf("hola1\n");
                         d = getItemm(p, L);
-                        if( strcmp(d.tipo, tipo)==0 || all){
+                        printf("hola2\n");
+                        if(strcmp(d.tipo, tipo)==0 || all){
+                                printf("hola3\n");
                                 printf("   %p%10d  %s ", d.direc, d.tam, d.tempo);
                                 if(strcmp(d.tipo,"mmap")==0 )
 				        printf("%s (descriptor %d)",d.nomefich, d.df);
@@ -1246,6 +1252,123 @@ void funIo(){
                 else
                         printf("uso: e-s [read|write] ......\n");
         }
+}
+
+
+void funMemDump(){
+    int bytes, cont = 0, cont1 = 0, cont2 = 0;
+    char *dir;
+
+    if (trozos[2] == NULL){
+        bytes = 25;              //Si no especifican cont, mostramos los 25 primeros bytes
+    } else {
+        bytes = atoi(trozos[2]); //convertimos el string de los bytes a volcar en int
+    }
+
+    dir = (char *) strtoul(trozos[1], NULL, 16); //Guardamos en dir la conversion a base 16 de la direccion que recibimos
+    
+    printf("Volcando %d bytes desde la direccion %p", bytes, dir);
+
+    while (cont < bytes) {
+
+        if (isprint(dir[cont])){              // 
+                printf("%2c ", dir[cont]);
+        }
+        else{
+                printf("   ");
+        } 
+        cont++;
+
+        if (cont % 25 == 0 || cont >= bytes) {
+            printf("\n");
+            
+            while (cont1 < 25 && cont2 < bytes) {
+                printf("%02x ", (unsigned char) dir[cont2]);
+                cont2++;
+                cont1++;
+            }
+            printf("\n");
+        }
+
+    }
+    printf("\n");
+}
+
+void funMemFill(){
+        int tam = 128;
+        char *dir;
+        char word = 'A';
+        int character;
+
+        if(numtrozos != 1 && numtrozos < 5){     //memfill addr cont byte    Llena la memoria a partir de addr con byte
+                dir = (char*) strtol(trozos[1], NULL, 16);
+        
+                if(numtrozos == 2){
+                        LlenarMemoria(dir, tam, word);
+                        return;
+                }
+                
+                if(numtrozos == 3){
+                        tam = atoi(trozos[2]);
+                        if(tam != 0){
+                                LlenarMemoria(dir, tam, word);
+                                return;
+                        }
+                        character = 2;
+                        tam = 128;
+                }         
+                        
+                if(numtrozos == 4){
+                        tam = atoi(trozos[2]);
+                        character = 3;
+                } 
+
+                if(trozos[character][1] == 'x') {
+                        word = (char) strtol(trozos[character], NULL, 16);
+                } else {
+                        word = (char) trozos[character][0];
+                }
+
+                LlenarMemoria(dir, tam, word);              
+        } else {
+                printf("Numero de argumentos invalidados\n");
+        }
+}
+
+void funMemory(tListMem *L){
+
+        // Variables locais
+        int numero = 18;
+        char character = 'd';
+        double decimales = 8.1;
+
+        // Variables estáticas
+        static int num = 6;
+        static char characters = 'b';
+        static double decimal = 1.;
+        
+        printf("DAFJHFG\n");
+
+        if(numtrozos == 1  || strcmp ( trozos[1], "-blocks") == 0 || strcmp(trozos[1], "-all") == 0){
+                printListMm(*L, "all"); 
+                // funAlloc(L);     
+                printf("dkfjgn\n");
+        } 
+
+        if(strcmp ( trozos[0], "memory") == 0 || strcmp( trozos[1], "-funcs") == 0 || strcmp(trozos[1], "-all") == 0){
+                printf("Funciones programa      %p,    %p,     %p\n"
+                       "Funciones libreria      %p,    %p,     %p\n", &funDelete, &funMemDump, &funAlloc, &printf, &malloc, &strcmp);        
+        }
+
+        if(strcmp ( trozos[0], "memory") == 0 ||strcmp(trozos[1], "-vars") == 0 || (strcmp(trozos[1], "-all") == 0)){
+                printf("Variables locales        %p,    %p,     %p\n"
+                       "Variables globales       %p,    %p,     %p\n"
+                       "Variables estaticas      %p,    %p,     %p\n", &numero, &character, &decimales, &L, &numtrozos, &memory, &num, &characters, &decimal);
+        }
+        printf("DFs\n");
+        if(numtrozos > 1 && (strcmp(trozos[1], "-pmap") == 0)){
+                Do_pmap();
+        } 
 }
 
 

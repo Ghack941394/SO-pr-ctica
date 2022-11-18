@@ -19,6 +19,8 @@
 #include<sys/shm.h>
 #include<sys/mman.h>
 #include<sys/ipc.h>
+#include <sys/wait.h>
+#include <ctype.h>
 
 #define DATA 32
 #define MAXLINEA 4096
@@ -42,6 +44,9 @@ void funDelete();
 void funDeltree();
 void funAlloc(tListMem *L);
 void funIo();
+void funMemDump();
+void funMemFill();
+void funMemory(tListMem *L);
 void funRecursiva();
 
 struct cmd {
@@ -70,6 +75,9 @@ struct cmd comandos[] = {
         {"e-s",funIo},
         {"i/o",funIo},
         {"e/s",funIo},
+        {"memdump", funMemDump},
+        {"memfill", funMemFill},
+        {"memory", funMemory},
         {"recursiva",funRecursiva},
         {NULL,NULL},
 };
