@@ -1,5 +1,6 @@
 make --dry-run --keep-going --print-directory
 make: Entering directory '/home/grachela28/Escritorio/UDC/Q3/SO/SO-pr-ctica'
-make: 'p3' is up to date.
+gcc -o p3  p3.o historial.o lmem.o lproc.o
+echo "Compilación exitosa"  
 make: Leaving directory '/home/grachela28/Escritorio/UDC/Q3/SO/SO-pr-ctica'
  

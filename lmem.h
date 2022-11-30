@@ -30,17 +30,17 @@ tPosMem next;
 
 typedef tPosMem tListMem;
 
-void createListm(tListMem* L);
+void createListm(tListMem*);
 
-bool isEmptyListm(tListMem L);
+bool isEmptyListm(tListMem);
 
-tPosMem firstm(tListMem L);
+tPosMem firstm(tListMem);
 
-tPosMem nextm(tPosMem , tListMem L);
+tPosMem nextm(tPosMem , tListMem );
 
-tItemMem getItemm(tPosMem p, tListMem L);
+tItemMem getItemm(tPosMem , tListMem );
 
-bool insertElementm(tItemMem d, tListMem* L);
+bool insertElementm(tItemMem , tListMem* );
 
-void removeElementm(tListMem* L, tPosMem p);
+void removeElementm(tListMem* , tPosMem );
 
