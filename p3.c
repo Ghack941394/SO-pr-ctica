@@ -6,7 +6,7 @@
  * DATE: 21 / 10 / 2022
  */
 
-#include "p2.h"
+#include "p3.h"
 
 /*Variables Globales*/
 
@@ -15,6 +15,7 @@ int numtrozos;           //Lleva la cuenta del numero de palabras introducidas
 char linea[MAXLINEA];    //Guarda absolutamente todo lo escrito por terminal 
 char ruta[PATH_MAX];     //Array para guardar el path 
 char memory;             //utilizada como variable global en el memory 
+
 
 /**
  * Function: funAutores
@@ -251,11 +252,7 @@ void funAyuda(){
  */
 void funFin(tList *listhistorial, tListMem *listmemoria){
         removeElement(listhistorial);
-        tPosMem p=firstm(*listmemoria);
-        while (p!=NULL){
-                removeElementm(listmemoria, p);
-                p = nextm(p,*listmemoria);
-        }       
+        funDealloc(listmemoria,1);      
         exit(0);
 }
 
@@ -993,18 +990,21 @@ void do_DeallocateDelkey (){
 
 //Aux xeral dealloc para deasignar o bloque de memoria que teña a dirección dada por parámetro 
 
-void do_Deallocate(tListMem *L){
+void do_Deallocate(tListMem *L, int flag){ //flag=0 se é para facer deallocate con dirección , flag=1 se é para sair e facer free a toda a lista
         char *dir;
         tPosMem p;
         tItemMem d;
 
-        if(sscanf(trozos[1],"0x%p",&dir)==0 ){ // comprobo se a dir que me dan é valida
+        if( !flag && sscanf(trozos[1],"0x%p",&dir)==0 ){ // comprobo se a dir que me dan é valida
                 perror("Dirección no válida\n"); return;
         }
 
+
         if(!isEmptyListm(*L)){
+
         p = firstm(*L);
 
+        if(!flag){
         while (p!=NULL){// recorro a lista para ver se teño esa dirección
                 d = getItemm(p,*L);
                 if (strcmp(dir, d.direc)==0) // salgo se a encontro
@@ -1026,8 +1026,27 @@ void do_Deallocate(tListMem *L){
                 removeElementm(L,p);
         }else
         	printf("Dirección %s no asignada con malloc, shared o mmap\n",trozos[1]);
-        }else
-        	printf("Dirección %s no asignada con malloc, shared o mmap\n",trozos[1]);
+        }
+        else{   
+                while (p!=NULL){// recorro a lista para liberar mem
+                        d = getItemm(p,*L);
+                        if( (strcmp("malloc", d.tipo) == 0) ){
+                                free(d.direc);
+                        }else if(strcmp("shared", d.tipo) == 0){
+                                shmdt(d.direc);
+                        }else if( strcmp("mmap", d.tipo) == 0){
+                                munmap(d.direc, d.tam);
+                        }else{
+                                printf("\n");
+                        }
+                        removeElementm(L,p); 
+                        p = nextm(p,*L);                  
+                }
+        }
+        }else{
+        	if(!flag)
+                        printf("Dirección %s no asignada con malloc, shared o mmap\n",trozos[1]);
+        }
 }
 
 //Aux  dealloc con malloc para deasignar o bloque de memoria que teña x tamaño dado
@@ -1120,7 +1139,7 @@ void do_DeallocateMmap(tListMem *L){
 
 
 //Función para opcións do deallocate
-void funDealloc(tListMem *L){
+void funDealloc(tListMem *L, int flag){
         if (numtrozos>1){
                 
                 if(strcmp("-malloc", trozos[1]) == 0)
@@ -1132,10 +1151,14 @@ void funDealloc(tListMem *L){
                 else if((strcmp("-delkey", trozos[1]) == 0))
                         do_DeallocateDelkey();
                 else{
-                        do_Deallocate(L);
+                        do_Deallocate(L,flag);
                 }
         }else
-                printListMm(*L, "all"); 
+                if(flag)
+                        do_Deallocate(L,flag);
+                else
+                        printListMm(*L, "all"); 
+
 }
 
 
@@ -1387,6 +1410,16 @@ void  funRecursiva(){
 }
 
 
+///////////////////////////////////////////////////////////////////P3//////////////////////////////////////////////////////////////////////////7
+
+
+
+
+
+
+
+
+
 /**
  * Function: trocearCadena
  * ----------------------
@@ -1443,7 +1476,7 @@ int main(){
                                         break;
                                 }else if(strcmp(trozos[0], "deallocate") == 0){
                                         insertElement(d, &listhistorial);
-                                        funDealloc(&listamemoria);
+                                        funDealloc(&listamemoria,0);
                                         break;
                                 }else if (strcmp(trozos[0], "memory") == 0){
                                         insertElement(d, &listhistorial);

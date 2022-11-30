@@ -43,6 +43,7 @@ void funStat();
 void funDelete();
 void funDeltree();
 void funAlloc(tListMem *L);
+void funDealloc(tListMem *L, int flag);
 void funIo();
 void funMemDump();
 void funMemFill();

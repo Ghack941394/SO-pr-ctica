@@ -1,9 +1,5 @@
-make --dry-run --always-make --keep-going --print-directory
+make --dry-run --keep-going --print-directory
 make: Entering directory '/home/grachela28/Escritorio/UDC/Q3/SO/SO-pr-ctica'
-gcc -c p2.c
-gcc -c historial.c
-gcc -c lmem.c
-gcc -o p2  p2.o historial.o lmem.o 
-echo "Compilación exitosa"  
+make: 'p3' is up to date.
 make: Leaving directory '/home/grachela28/Escritorio/UDC/Q3/SO/SO-pr-ctica'
  

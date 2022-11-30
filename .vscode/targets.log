@@ -8,7 +8,7 @@ make: *** No rule to make target 'all'.  Stop.
 # This is free software: you are free to change and redistribute it.
 # There is NO WARRANTY, to the extent permitted by law.
 
-# Make data base, printed on Fri Nov 18 11:24:08 2022
+# Make data base, printed on Wed Nov 30 16:25:56 2022
 
 # Variables
 
@@ -63,7 +63,7 @@ VSCODE_CODE_CACHE_PATH = /home/grachela28/.config/Code/CachedData/6261075646f055
 # environment
 LANG = C
 # environment
-XAUTHORITY = /run/user/1000/.mutter-Xwaylandauth.ZJN1V1
+XAUTHORITY = /run/user/1000/.mutter-Xwaylandauth.YNLJW1
 # default
 .LOADED := 
 # default
@@ -99,7 +99,7 @@ SNAP_REEXEC =
 # automatic
 @F = $(notdir $@)
 # environment
-VSCODE_PID = 13098
+VSCODE_PID = 5653
 # environment
 XDG_SESSION_TYPE = wayland
 # automatic
@@ -107,7 +107,7 @@ XDG_SESSION_TYPE = wayland
 # environment
 BAMF_DESKTOP_FILE_HINT = /var/lib/snapd/desktop/applications/code_code.desktop
 # environment
-SESSION_MANAGER = local/Gmo-Lenovo:@/tmp/.ICE-unix/11107,unix/Gmo-Lenovo:/tmp/.ICE-unix/11107
+SESSION_MANAGER = local/Gmo-Lenovo:@/tmp/.ICE-unix/2315,unix/Gmo-Lenovo:/tmp/.ICE-unix/2315
 # automatic
 *F = $(notdir $*)
 # environment
@@ -157,7 +157,7 @@ LC_TIME = gl_ES.UTF-8
 # environment
 SNAP = /snap/code/113
 # environment
-INVOCATION_ID = 300a1bfec2b149a6813cc06ed72ebbec
+INVOCATION_ID = 69e0ed3ffbb14586b3151e0aaf029c75
 # environment
 SNAP_REVISION = 113
 # environment
@@ -193,9 +193,9 @@ GIO_LAUNCHED_DESKTOP_FILE = /var/lib/snapd/desktop/applications/code_code.deskto
 # environment
 SNAP_ARCH = amd64
 # makefile
-.DEFAULT_GOAL := p2
+.DEFAULT_GOAL := p3
 # environment
-SYSTEMD_EXEC_PID = 11148
+SYSTEMD_EXEC_PID = 2352
 # environment
 DISPLAY = :0
 # environment
@@ -209,11 +209,11 @@ SNAP_DATA = /var/snap/code/113
 # environment
 SNAP_CONTEXT = mOQFhLwS4BUffgx9pHmKbzSJULCQsrzLdBkZJHElBq5NejLRM0us
 # environment
-MANAGERPID = 10822
+MANAGERPID = 2083
 # environment
 LC_MEASUREMENT = gl_ES.UTF-8
 # environment
-GIO_LAUNCHED_DESKTOP_FILE_PID = 13049
+GIO_LAUNCHED_DESKTOP_FILE_PID = 5607
 # environment
 _ = /snap/code/113/usr/share/code/code
 # environment
@@ -223,7 +223,7 @@ XDG_RUNTIME_DIR = /run/user/1000
 # environment
 GDK_PIXBUF_MODULE_FILE = /home/grachela28/snap/code/common/.cache/gdk-pixbuf-loaders.cache
 # environment
-JOURNAL_STREAM = 8:103675
+JOURNAL_STREAM = 8:33399
 # environment
 XDG_SESSION_CLASS = user
 # environment
@@ -279,10 +279,9 @@ SNAP_LIBRARY_PATH = /var/lib/snapd/lib/gl:/var/lib/snapd/lib/gl32:/var/lib/snapd
 
 # Directories
 
- 
-# . (device 66309, inode 7216961): 20 files, no impossibilities.
+# . (device 66309, inode 7216961): 19 files, no impossibilities.
 
-# 20 files, no impossibilities in 1 directories.
+# 19 files, no impossibilities in 1 directories.
 
 # Implicit Rules
 
@@ -294,6 +293,7 @@ historial.o: historial.h historial.c
 #  Implicit rule search has not been done.
 #  Modification time never checked.
 #  File has not been updated.
+ 
 #  recipe to execute (from 'Makefile', line 6):
 	gcc -c historial.c
 
@@ -305,29 +305,35 @@ lmem.o: lmem.h lmem.c
 	gcc -c lmem.c
 
 # Not a target:
+p3.c:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+
+# Not a target:
+p3.h:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+
+# Not a target:
 lmem.h:
 #  Implicit rule search has not been done.
 #  Modification time never checked.
 #  File has not been updated.
 
-p2.o: p2.h p2.c
+p3.o: p3.h p3.c
 #  Implicit rule search has not been done.
 #  Modification time never checked.
 #  File has not been updated.
 #  recipe to execute (from 'Makefile', line 12):
-	gcc -c p2.c
+	gcc -c p3.c
 	
-
-# Not a target:
-p2.c:
-#  Implicit rule search has not been done.
-#  Modification time never checked.
-#  File has not been updated.
 
 # Not a target:
 Makefile:
 #  Implicit rule search has been done.
-#  Last modified 2022-11-02 16:45:29.515668645
+#  Last modified 2022-11-30 16:25:43.22461942
 #  File has been updated.
 #  Successfully updated.
 
@@ -336,7 +342,7 @@ limpar:
 #  Modification time never checked.
 #  File has not been updated.
 #  recipe to execute (from 'Makefile', line 15):
-	rm p2 historial.o p2.o lmem.o
+	rm p3 historial.o p3.o lmem.o
 
 # Not a target:
 lmem.c:
@@ -344,14 +350,16 @@ lmem.c:
 #  Modification time never checked.
 #  File has not been updated.
 
-# Not a target:
-historial.c:
+p3: p3.o historial.o lmem.o
 #  Implicit rule search has not been done.
 #  Modification time never checked.
 #  File has not been updated.
+#  recipe to execute (from 'Makefile', line 2):
+	gcc -o p3  p3.o historial.o lmem.o 
+	echo "Compilación exitosa"  
 
 # Not a target:
-p2.h:
+historial.c:
 #  Implicit rule search has not been done.
 #  Modification time never checked.
 #  File has not been updated.
@@ -361,14 +369,6 @@ p2.h:
 #  Implicit rule search has not been done.
 #  Modification time never checked.
 #  File has not been updated.
-
-p2: p2.o historial.o lmem.o
-#  Implicit rule search has not been done.
-#  Modification time never checked.
-#  File has not been updated.
-#  recipe to execute (from 'Makefile', line 2):
-	gcc -o p2  p2.o historial.o lmem.o 
-	echo "Compilación exitosa"  
 
 # Not a target:
 all:
@@ -384,19 +384,19 @@ historial.h:
 #  File has not been updated.
 
 # files hash-table stats:
-# Load=15/1024=1%, Rehash=0, Collisions=1/37=3%
+# Load=15/1024=1%, Rehash=0, Collisions=2/37=5%
 # VPATH Search Paths
 
 # No 'vpath' search paths.
 
 # No general ('VPATH' variable) search path.
 
-# strcache buffers: 1 (0) / strings = 26 / storage = 189 B / avg = 7 B
-# current buf: size = 8162 B / used = 189 B / count = 26 / avg = 7 B
+# strcache buffers: 1 (0) / strings = 25 / storage = 187 B / avg = 7 B
+# current buf: size = 8162 B / used = 187 B / count = 25 / avg = 7 B
 
-# strcache performance: lookups = 48 / hit rate = 45%
+# strcache performance: lookups = 47 / hit rate = 46%
 # hash-table stats:
-# Load=26/8192=0%, Rehash=0, Collisions=0/48=0%
-# Finished Make data base on Fri Nov 18 11:24:08 2022
+# Load=25/8192=0%, Rehash=0, Collisions=0/47=0%
+# Finished Make data base on Wed Nov 30 16:25:56 2022
 
  
