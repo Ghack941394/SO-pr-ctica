@@ -49,6 +49,7 @@ void funMemDump();
 void funMemFill();
 void funMemory(tListMem *L);
 void funRecursiva();
+void funShowenv();
 
 struct cmd {
   char *nombre;
@@ -79,6 +80,7 @@ struct cmd comandos[] = {
         {"memdump", funMemDump},
         {"memfill", funMemFill},
         {"recurse",funRecursiva},
+        {"showenv",funShowenv},
         {NULL,NULL},
 };
 
