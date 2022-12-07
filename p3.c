@@ -1410,15 +1410,207 @@ void  funRecursiva(){
 }
 
 
-///////////////////////////////////////////////////////////////////P3//////////////////////////////////////////////////////////////////////////7
+/////////////////////////////////////////////////////////////////// P3 ////////////////////////////////////////////////////////////////////
+
+int BuscarVariable (char *var, char *e[]){ /*busca una variable en el entorno que se le pasa como parámetro*/
+        int pos = 0;
+        char aux[MAXVAR];
+        strcpy(aux, var);
+        strcat(aux, "=");
+
+        while (e[pos] != NULL) {
+                if (!strncmp(e[pos], aux, strlen(aux))){
+                return (pos);
+                } else {
+                        pos++;
+                }
+        }
+        errno = ENOENT; /* no hay tal variable */
+        return (-1);
+}
 
 
+int CambiarVariable(char *var, char *valor, char *e[]){ /*cambia una variable en el entorno que se le pasa como parámetro*/                                                     
+        int pos;                                              /*lo hace directamente, no usa putenv*/
+        char *aux;
+        
+        if ((pos = BuscarVariable(var, e)) == -1){
+                return(-1);
+        }
+        
+        if ((aux = (char *)malloc(strlen(var) + strlen(valor) + 2)) == NULL){
+                return -1;
+        }
+        strcpy(aux, var);
+        strcat(aux, "=");
+        strcat(aux, valor);
+        e[pos] = aux;
+        return (pos);
+}
+
+/*para sistemas donde no hay (o no queremos usuar) execvpe*/
+// char * Ejecutable (char *s)
+// {
+// 	char path[MAXNAME];
+// 	static char aux2[MAXNAME];
+// 	struct stat st;
+// 	char *p;
+// 	if (s==NULL || (p=getenv("PATH"))==NULL)
+// 		return s;
+// 	if (s[0]=='/' || !strncmp (s,"./",2) || !strncmp (s,"../",3))
+//         return s;       /*is an absolute pathname*/
+// 	strncpy (path, p, MAXNAME);
+// 	for (p=strtok(path,":"); p!=NULL; p=strtok(NULL,":")){
+//        sprintf (aux2,"%s/%s",p,s);
+// 	   if (lstat(aux2,&st)!=-1)
+// 		return aux2;
+// 	}
+// 	return s;
+// }
+
+// int OurExecvpe(const char *file, char *const argv[], char *const envp[])
+// {
+//    return (execve(Ejecutable(file),argv, envp));
+// }
+
+// int ValorSenal(char * sen)  /*devuelve el numero de senial a partir del nombre*/ 
+// { 
+//   int i;
+//   for (i = 0; sigstrnum[i].nombre != NULL; i++)
+//   	if (!strcmp(sen, sigstrnum[i].nombre))
+// 		return sigstrnum[i].senal;
+//   return -1;
+// }
 
 
+// char *NombreSenal(int sen)  /*devuelve el nombre senal a partir de la senal*/ 
+// {			/* para sitios donde no hay sig2str*/
+//  int i;
+//   for (i=0; sigstrnum[i].nombre!=NULL; i++)
+//   	if (sen==sigstrnum[i].senal)
+// 		return sigstrnum[i].nombre;
+//  return ("SIGUNKNOWN");
+// }
 
+void printVar(char *env[], char *name){
+        int i;
 
+        for(i = 0; env[i] != NULL; i++){
+                printf("%p->%s[%d]=(%p) %s \n", &env[i], name, i, env[i], env[i]); //es el ultimo argumento el que peta 
+        }
+}
 
+/**
+ * Function: funShowVar
+ * ------------------------
+ * Shows the value of 
+ * an environment variable.
+ *
+ * @param arg3 array of the 
+ *             third argument
+ *             of main.
+ * @param env environment 
+ *            variable array. 
+ *                   
+ * @return void.
+ */
+void funShowVar(char *arg3[], char *env[]){
+        int i, j;
+        char *value;
+        if(numtrozos == 1){
+                printVar(arg3, "main arg3");
+        } else if (numtrozos == 2 ){
+                if((value = getenv(trozos[1])) != NULL){
+                        if((i = BuscarVariable(trozos[1], arg3) == -1) || ((j = BuscarVariable(trozos[1], env)) == -1)){
+                                perror("Error: No existe esta varible");
+                        } else {
+                                printf("Con main arg3 %s (%p) @%p\n"
+                                       "Con environ %s (%p) @%p\n"
+                                       "Con getenv %s (%p)\n", arg3[i], arg3[i], &arg3[i], env[j], env[j], &env[j], value, &value);   
+                        }
+                }else{
+                        printf("La variable \"%s\" no existe", trozos[1]);
+                }
+        }else{
+                printf("El formato no es el correcto\n");
+        }
+}
 
+/**
+ * Function: FunChangeVar
+ * ---------------------
+ * Shows the process environment.
+ *
+ * @param enviroment environment 
+ *                   variable array. 
+ *                   
+ * @return void.
+ */
+void funChangeVar(char *env[]){
+        int pos;
+        char *var;
+
+        if(numtrozos == 4){
+                if(strcmp(trozos[1], "-a") == 0){
+                        pos = CambiarVariable(trozos[2], trozos[3], env);
+                        if(pos == -1){
+                                perror("Error"); 
+                        }
+                }else if (strcmp(trozos[1], "-e") == 0){
+                        pos = CambiarVariable(trozos[2], trozos[3], env);
+                        if(pos == -1){
+                                perror("Error:"); 
+                        }
+                }else if(strcmp(trozos[1], "-p") == 0){
+                        var = malloc(strlen(trozos[2]) + strlen(trozos[3]) + 4);
+                        strcpy(var, trozos[2]);
+                        strcat(var, "=");
+                        strcat(var, trozos[3]);
+                        
+                        if(putenv(var) != 0){
+                                perror("Error"); 
+                                free(var);
+                                return;
+                        }
+                        //donde puedo liberar la variable var??
+                }else{
+                        printf("Uso: cambiarvar [-a|-e|-p] var valor\n");
+                        free(var);
+                        return;        
+                }
+                printf("La variable de entorno \"%s\" cambio su valor a \"%s\"\n", trozos[2], trozos[3]);
+        }else{
+                printf("Uso: cambiarvar [-a|-e|-p] var valor\n");          
+        }
+}
+
+/**
+ * Function: funfork
+ * ---------------------
+ * Shows the process environment.
+ *
+ * @param enviroment environment 
+ *                   variable array. 
+ *                   
+ * @return void.
+ */
+void funfork(tListP *LP){
+	pid_t pid;
+        tPosP posP;
+	
+        if(numtrozos == 1){
+                if ((pid = fork()) == 0){
+                        if(!isEmptyListp(LP)){
+                                for(posP = firstp(*LP); posP != NULL; posP = nextP){
+                                removeElementp(LP, posP);
+                                }
+                        }
+		        printf ("ejecutando proceso %d\n", getpid());
+                }else if (pid != -1){
+                        waitpid (pid, NULL, 0);
+                }
+        }	
+}
 
 /**
  * Function: trocearCadena
@@ -1428,11 +1620,12 @@ void  funRecursiva(){
  *
  * @param cadena string with the command
  * @param trozos array of strings
+ * 
  * @return number of strings copied in trozos
  */
-
 int TrocearCadena(char * cadena, char * trozos[]){
-        int i=1;
+        int i = 1;
+
         if ((trozos[0]=strtok(cadena," \n\t"))==NULL)
                 return 0;
         while ((trozos[i]=strtok(NULL," \n\t"))!=NULL)
@@ -1442,13 +1635,14 @@ int TrocearCadena(char * cadena, char * trozos[]){
 
 
 //Main
-int main(){
+int main(int argc, char *argv[], char *env[]){
         tList listhistorial;
         createList(&listhistorial);
-        int i;
         tItemL d;
         tListMem listamemoria;
         createListm(&listamemoria);
+        // tListP listaProcesos;
+        // createListp(&listaProcesos);
 
         while(1){
                 printf("-> ");
@@ -1459,7 +1653,7 @@ int main(){
                 numtrozos = TrocearCadena(linea, trozos);
                 if (numtrozos == 0)
                         continue;
-                for (i = 0; ; i++){
+                for (int i = 0; ; i++){
                         if(comandos[i].nombre == NULL){
                                 if (strcmp(trozos[0], "hist") == 0){
                                         insertElement(d, &listhistorial);
@@ -1476,15 +1670,17 @@ int main(){
                                         break;
                                 }else if(strcmp(trozos[0], "deallocate") == 0){
                                         insertElement(d, &listhistorial);
-                                        funDealloc(&listamemoria,0);
+                                        funDealloc(&listamemoria, 0);
                                         break;
                                 }else if (strcmp(trozos[0], "memory") == 0){
                                         insertElement(d, &listhistorial);
                                         funMemory(&listamemoria);
                                         break;
-                                }
-                                
-                                else{
+                                } else if (strcmp(trozos[0], "fork") == 0){
+                                        insertElement(d, &listhistorial);
+                                        funFork(&listaProcesos);
+                                        break;        
+                                } else {
                                         fprintf(stderr, "%s '%s'\n", strerror(3), trozos[0]);
                                         insertElement(d, &listhistorial);
                                         break;
@@ -1497,4 +1693,4 @@ int main(){
                         }
                 }
         }
-}    
+}     
