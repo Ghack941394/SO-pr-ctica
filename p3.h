@@ -28,6 +28,7 @@
 #define MAXFyH 128
 #define NAMEMAX 1024
 #define TAMANO 2048
+#define MAXVAR 256
 
 void funAutores();
 void funFecha();
@@ -49,6 +50,8 @@ void funMemDump();
 void funMemFill();
 void funMemory(tListMem *L);
 void funRecursiva();
+void funShowVar(char *arg3[], char *env[]);
+void funChangeVar(char *env[]);
 
 struct cmd {
   char *nombre;
@@ -79,6 +82,8 @@ struct cmd comandos[] = {
         {"memdump", funMemDump},
         {"memfill", funMemFill},
         {"recurse",funRecursiva},
+        {"showvar",funShowVar},
+        {"changevar",funChangeVar},
         {NULL,NULL},
 };
 
@@ -110,4 +115,3 @@ struct ax tabla[] = {
   {"memdump", "addr cont 	Vuelca en pantallas los contenidos (cont bytes) de la posicion de memoria addr"},
   {NULL,NULL},
 };
-
