@@ -37,7 +37,7 @@ void funAyuda();
 void funPid();
 void funInfosis();
 void funCarpeta();
-void funFin(tList *L, tListMem *Lm);
+void funFin(tList *L, tListMem *Lm, tListP *Lp);
 void funHist(tList *L);
 void funCreate();
 void funList();
@@ -56,6 +56,9 @@ void funShowVar(char *arg3[], char *env[]);
 void funChangeVar(char *env[]);
 void funPriority();
 void funExecute();
+void funJob(tListP *Lp);
+void funListJobs(tListP Lp);
+
 
 struct cmd {
   char *nombre;

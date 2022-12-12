@@ -250,9 +250,14 @@ void funAyuda(){
  *            
  * @return void.
  */
-void funFin(tList *listhistorial, tListMem *listmemoria){
+void funFin(tList *listhistorial, tListMem *listmemoria, tListP *listaprocesos){
         removeElement(listhistorial);
-        funDealloc(listmemoria,1);      
+        funDealloc(listmemoria,1); 
+        tPosP p = firstp(*listaprocesos);
+        while (p!=NULL){
+                removeElementp(listaprocesos,p); 
+                p = nextp(p,*listaprocesos);
+        }
         exit(0);
 }
 
@@ -1483,14 +1488,14 @@ int OurExecvpe(const char *file, char *const argv[], char *const envp[])
 // }
 
 
-// char *NombreSenal(int sen)  /*devuelve el nombre senal a partir de la senal*/ 
-// {			/* para sitios donde no hay sig2str*/
-//  int i;
-//   for (i=0; sigstrnum[i].nombre!=NULL; i++)
-//   	if (sen==sigstrnum[i].senal)
-// 		return sigstrnum[i].nombre;
-//  return ("SIGUNKNOWN");
-// }
+char *NombreSenal(int sen)  /*devuelve el nombre senal a partir de la senal*/ 
+{			/* para sitios donde no hay sig2str*/
+  int i;
+   for (i=0; sigstrnum[i].nome!=NULL; i++)
+   	if (sen==sigstrnum[i].sinal)
+ 		return sigstrnum[i].nome;
+  return ("SIGUNKNOWN");
+}
 
 void printVar(char **env, char *name){
         int i = 0;
@@ -1704,9 +1709,8 @@ void funExecute(){
                 perror("Imposible ejecutar");
 }
 
-
 /**
- * Function: FunListJob
+ * Function: FunListJobs
  * ---------------------
  * Shows the process environment.
  *
@@ -1714,20 +1718,88 @@ void funExecute(){
  *  lista de procesos
  *                   
  * @return void.
- *
-void funListJob(tListP listaproc){
+ */
+void funListJobs(tListP listaproc){
         tPosP p = firstp(listaproc);
         tItemP i = getItemp(p, listaproc);
         while (p!=NULL){
                 printf("%d %8s p=%d %s %s", i.pid, i.usuario, i.prioridade, i.tempo, i.estado );
-                if ()
-                {}
+        }
+}
+
+
+/**
+ * Function: funJob
+ * ---------------------
+ * Shows the process environment.
+ *
+ * @param listaproc
+ *  lista de procesos
+ *                   
+ * @return void.
+ */
+void funJob(tListP *listaproc){
+        pid_t pid;
+        tPosP p = firstp(*listaproc);
+        tPosP q;
+        tItemP d;
+        int estado;
+        struct stat buff;
+
+        if(!(numtrozos==1 || (numtrozos==2 && strcmp(trozos[1],"-fg")==0))){
+                if(strcmp(trozos[1],"-fg")==0){
+                        pid = atoi(trozos[2]);
+                        while (p!=NULL){
+                                d = getItemp(p,*listaproc);
+                                if(d.pid==pid){
+                                        q = p;
+                                        break;
+                                }
+                                p = nextp(p,*listaproc);
+                        }
+
+                        if (q!= NULL){   
+                                estado = atoi(d.estado);     
+                                if(waitpid(pid,&estado,0) == -1)
+                                        perror("Imposible pasar proceso a primer plano"); 
+                                printf("El proceso %d fue terminado ", pid);
+                                if(WIFEXITED(estado)){
+                                        printf("correctamente\n");
+                                }else if(WIFSIGNALED(estado)){
+                                        printf("por la señal %s\n",NombreSenal(estado));
+                                }
+                                removeElementp(listaproc,p);
+
+                        }else
+                                perror("Proceso no encontrado en segundo plano");        
+                        
+                }else{
+                        pid = atoi(trozos[1]);
+                        while (p!=NULL){
+                                d = getItemp(p,*listaproc);
+                                if(d.pid==pid){
+                                        q=p;
+                                        break;
+                                }
+                                p = nextp(p,*listaproc);
+                        }
+                        if(q!=NULL){
+                                d = getItemp(q,*listaproc);
+                                if(lstat(d.comando,&buff)!=-1){
+
+                                        printf("%d  %s p=%d %s %s (%d) %s",d.pid,d.usuario, d.prioridade,d.tempo, d.estado,buff.st_mode,d.comando);
+                                }
+                        }
+
+                                d = getItemp(q,*listaproc);
+                }
                 
+        }else{  
+                if(!isEmptyListp(*listaproc))
+                        funListJobs(*listaproc);
         }
         
 }
-*/
-
 
 
 /**
@@ -1780,7 +1852,7 @@ int main(int argc, char *argv[], char *env[]){
                                 }
                                 else if(strcmp(trozos[0], "fin") == 0 || strcmp(trozos[0], "bye") == 0 || strcmp(trozos[0], "salir") == 0){
                                         insertElement(d, &listhistorial);
-                                        funFin(&listhistorial, &listamemoria);
+                                        funFin(&listhistorial, &listamemoria, &listaProcesos);
                                 }
                                 else if(strcmp(trozos[0], "allocate") == 0){
                                         insertElement(d, &listhistorial);
@@ -1798,7 +1870,15 @@ int main(int argc, char *argv[], char *env[]){
                                    //     insertElement(d, &listhistorial);
                                      //   funFork(&listaProcesos);
                                        // break;        } 
-                                       else {
+                                else if(strcmp(trozos[0], "job") == 0){
+                                        insertElement(d,&listhistorial);
+                                        funJob(&listaProcesos);
+                                        break;
+                                }else if (strcmp(trozos[0], "listjobs") == 0){
+                                        insertElement(d,&listhistorial);
+                                        funListJobs(listaProcesos);
+                                        break;
+                                }else {
                                         fprintf(stderr, "%s '%s'\n", strerror(3), trozos[0]);
                                         insertElement(d, &listhistorial);
                                         break;
