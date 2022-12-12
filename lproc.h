@@ -20,6 +20,7 @@ typedef struct tNodep* tPosP;
 
 typedef struct {
   pid_t pid;
+  proc usuario;
   proc tempo;
   proc estado;
   proc comando;

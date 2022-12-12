@@ -16,6 +16,7 @@
 #include <fcntl.h>
 #include "historial.h"
 #include "lmem.h"
+#include "lproc.h"
 #include<sys/shm.h>
 #include<sys/mman.h>
 #include<sys/ipc.h>
@@ -28,6 +29,7 @@
 #define MAXFyH 128
 #define NAMEMAX 1024
 #define TAMANO 2048
+#define MAXVAR 256
 
 void funAutores();
 void funFecha();
@@ -50,6 +52,10 @@ void funMemFill();
 void funMemory(tListMem *L);
 void funRecursiva();
 void funShowenv();
+void funShowVar(char *arg3[], char *env[]);
+void funChangeVar(char *env[]);
+void funPriority();
+void funExecute();
 
 struct cmd {
   char *nombre;
@@ -80,7 +86,9 @@ struct cmd comandos[] = {
         {"memdump", funMemDump},
         {"memfill", funMemFill},
         {"recurse",funRecursiva},
-        {"showenv",funShowenv},
+        {"showvar",funShowVar},
+        {"priority", funPriority},
+        {"execute", funExecute},
         {NULL,NULL},
 };
 
@@ -112,4 +120,3 @@ struct ax tabla[] = {
   {"memdump", "addr cont 	Vuelca en pantallas los contenidos (cont bytes) de la posicion de memoria addr"},
   {NULL,NULL},
 };
-

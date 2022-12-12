@@ -995,7 +995,7 @@ void do_Deallocate(tListMem *L, int flag){ //flag=0 se é para facer deallocate 
         tPosMem p;
         tItemMem d;
 
-        if( !flag && sscanf(trozos[1],"0x%p",&dir)==0 ){ // comprobo se a dir que me dan é valida
+        if( !flag && sscanf(trozos[1],"0x%p",&dir)==0 ){ // comprobo se a dir que me dan é valida 
                 perror("Dirección no válida\n"); return;
         }
 
@@ -1449,29 +1449,29 @@ int CambiarVariable(char *var, char *valor, char *e[]){ /*cambia una variable en
 }
 
 /*para sistemas donde no hay (o no queremos usuar) execvpe*/
-// char * Ejecutable (char *s)
-// {
-// 	char path[MAXNAME];
-// 	static char aux2[MAXNAME];
-// 	struct stat st;
-// 	char *p;
-// 	if (s==NULL || (p=getenv("PATH"))==NULL)
-// 		return s;
-// 	if (s[0]=='/' || !strncmp (s,"./",2) || !strncmp (s,"../",3))
-//         return s;       /*is an absolute pathname*/
-// 	strncpy (path, p, MAXNAME);
-// 	for (p=strtok(path,":"); p!=NULL; p=strtok(NULL,":")){
-//        sprintf (aux2,"%s/%s",p,s);
-// 	   if (lstat(aux2,&st)!=-1)
-// 		return aux2;
-// 	}
-// 	return s;
-// }
+char * Ejecutable (char *s)
+{
+ 	char path[MAXPATHLEN];
+ 	static char aux2[MAXPATHLEN];
+ 	struct stat st;
+ 	char *p;
+ 	if (s==NULL || (p=getenv("PATH"))==NULL)
+ 		return s;
+ 	if (s[0]=='/' || !strncmp (s,"./",2) || !strncmp (s,"../",3))
+         return s;       /*is an absolute pathname*/
+ 	strncpy (path, p, MAXPATHLEN);
+ 	for (p=strtok(path,":"); p!=NULL; p=strtok(NULL,":")){
+        sprintf (aux2,"%s/%s",p,s);
+ 	   if (lstat(aux2,&st)!=-1)
+ 		return aux2;
+ 	}
+ 	return s;
+}
 
-// int OurExecvpe(const char *file, char *const argv[], char *const envp[])
-// {
-//    return (execve(Ejecutable(file),argv, envp));
-// }
+int OurExecvpe(const char *file, char *const argv[], char *const envp[])
+{
+    return (execve(Ejecutable(file),argv, envp));
+}
 
 // int ValorSenal(char * sen)  /*devuelve el numero de senial a partir del nombre*/ 
 // { 
@@ -1492,12 +1492,16 @@ int CambiarVariable(char *var, char *valor, char *e[]){ /*cambia una variable en
 //  return ("SIGUNKNOWN");
 // }
 
-void printVar(char *env[], char *name){
-        int i;
-
+void printVar(char **env, char *name){
+        int i = 0;
         for(i = 0; env[i] != NULL; i++){
-                printf("%p->%s[%d]=(%p) %s \n", &env[i], name, i, env[i], env[i]); //es el ultimo argumento el que peta 
+                printf("olaaaaaa\n");
+                char * path = malloc(MAXVAR*sizeof(char*));
+                path=getenv(env[i]); 
+                                printf("olaaaaaa\n");
+                printf("%p->%s[%d]=(%p) %s \n", &env[i], name, i, env[i], path); //es el ultimo argumento el que peta 
         }
+       // printf("%p->%s[%d]=(%p) \n", &env[0], name, i, env[0]);
 }
 
 /**
@@ -1516,6 +1520,7 @@ void printVar(char *env[], char *name){
  */
 void funShowVar(char *arg3[], char *env[]){
         int i, j;
+        //char *value = malloc(MAXVAR*sizeof(char*));
         char *value;
         if(numtrozos == 1){
                 printVar(arg3, "main arg3");
@@ -1594,14 +1599,14 @@ void funChangeVar(char *env[]){
  *                   
  * @return void.
  */
-void funfork(tListP *LP){
+/*void funfork(tListP *LP){
 	pid_t pid;
         tPosP posP;
 	
         if(numtrozos == 1){
                 if ((pid = fork()) == 0){
                         if(!isEmptyListp(LP)){
-                                for(posP = firstp(*LP); posP != NULL; posP = nextP){
+                                for(posP = firstp(*LP); posP != NULL; posP = nextp){
                                 removeElementp(LP, posP);
                                 }
                         }
@@ -1611,6 +1616,108 @@ void funfork(tListP *LP){
                 }
         }	
 }
+*/
+
+/**
+ * Función auxiliar para coller a prioridade dun proceso,
+ * Se non existe tal proceso devolve o seu erro correspondente
+ */
+int funAuxgetPriority(int pid){
+        errno=0; // Se cando facemos get priority hai algún erro, errno pasa a ser -1 e imprimese a saída do erro
+        int prioridade = getpriority(PRIO_PROCESS, pid);
+        if(errno==0)
+                return prioridade;
+        else
+                perror("Imposible obtener la prioridad del proceso:");         
+        
+}
+
+/**
+ * Function: funPriority
+ * ------------------------
+ *  
+ * Muestra o cambia la prioridad 
+ * del proceso pid a valor
+ *                   
+ * @return void.
+ */
+void funPriority(){
+        
+        pid_t p;//pid do proceso a coller
+        int pri;//prioridade do proceso a cambiar ou mostrar
+        int valor; // valor polo cal se quere cambiar a prioridade do proceso
+        if(numtrozos==1)
+                p = getpid();
+        else
+             p = atoi(trozos[1]);
+
+        if (numtrozos>=3){
+                valor = atoi(trozos[2]);
+                printf (" o pid que colle %d", p);
+                if(setpriority(PRIO_PROCESS, p, valor)!=0) //cambio a prioridade, devolve -1 se da erro
+                        perror("Imposible cambiar la prioridad del proceso:");
+        }
+        else{
+                pri = funAuxgetPriority(p);
+                printf("Prioridad del proceso %d es %d\n", p, pri);  
+        }
+}
+
+/**
+ * Function: funExecute
+ * ---------------------
+ * Executa, sen crear proceso, prog con argumentos
+ * en un entorno que contén só as variables VAR1,
+ * VAR2,...
+ * @pri para establecer unha prioridade 
+ *                   
+ * @return void.
+ */
+void funExecute(){
+        pid_t pid = getpid();
+        int pri, flagpri=0;
+        int i,j,s;
+        char priori[5];
+        
+        //para coller a prioridade
+        for(i = 1; i<numtrozos && trozos[i][0]=='@'; i++){
+                flagpri += flagpri;
+                s = strlen(trozos[i]);
+                for (j = 1; j < s; j++){
+                        priori[j-1]=trozos[i][j];
+                }
+                pri = atoi(priori);        
+                break;
+        }
+        if(OurExecvpe(trozos[2],&trozos[2],&trozos[1])==-1)
+                perror("Imposible ejecutar");
+}
+
+
+/**
+ * Function: FunListJob
+ * ---------------------
+ * Shows the process environment.
+ *
+ * @param listaproc
+ *  lista de procesos
+ *                   
+ * @return void.
+ *
+void funListJob(tListP listaproc){
+        tPosP p = firstp(listaproc);
+        tItemP i = getItemp(p, listaproc);
+        while (p!=NULL){
+                printf("%d %8s p=%d %s %s", i.pid, i.usuario, i.prioridade, i.tempo, i.estado );
+                if ()
+                {}
+                
+        }
+        
+}
+*/
+
+
 
 /**
  * Function: trocearCadena
@@ -1641,8 +1748,8 @@ int main(int argc, char *argv[], char *env[]){
         tItemL d;
         tListMem listamemoria;
         createListm(&listamemoria);
-        // tListP listaProcesos;
-        // createListp(&listaProcesos);
+        tListP listaProcesos;
+        createListp(&listaProcesos);
 
         while(1){
                 printf("-> ");
@@ -1676,11 +1783,11 @@ int main(int argc, char *argv[], char *env[]){
                                         insertElement(d, &listhistorial);
                                         funMemory(&listamemoria);
                                         break;
-                                } else if (strcmp(trozos[0], "fork") == 0){
-                                        insertElement(d, &listhistorial);
-                                        funFork(&listaProcesos);
-                                        break;        
-                                } else {
+                                }// else if (strcmp(trozos[0], "fork") == 0){
+                                   //     insertElement(d, &listhistorial);
+                                     //   funFork(&listaProcesos);
+                                       // break;        } 
+                                       else {
                                         fprintf(stderr, "%s '%s'\n", strerror(3), trozos[0]);
                                         insertElement(d, &listhistorial);
                                         break;
