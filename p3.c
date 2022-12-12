@@ -1676,12 +1676,13 @@ void funPriority(){
 void funExecute(){
         pid_t pid = getpid();
         int pri, flagpri=0;
-        int i,j,s;
+        int i,j,s,k=1;
         char priori[5];
-        
+        char *varenv[10];
+
         //para coller a prioridade
         for(i = 1; i<numtrozos && trozos[i][0]=='@'; i++){
-                flagpri += flagpri;
+                flagpri=1; // para saber se o usuario quere establecer prioridade 
                 s = strlen(trozos[i]);
                 for (j = 1; j < s; j++){
                         priori[j-1]=trozos[i][j];
@@ -1689,7 +1690,17 @@ void funExecute(){
                 pri = atoi(priori);        
                 break;
         }
-        if(OurExecvpe(trozos[2],&trozos[2],&trozos[1])==-1)
+        if(flagpri)
+                setpriority(PRIO_PROCESS,pid,pri);
+
+        //para coller as pariables de entorno
+        while (getenv(trozos[k])!=NULL){
+                varenv[k-1]=trozos[k];
+                k++;
+        }
+
+        //execución
+        if(OurExecvpe(trozos[k],&trozos[k],varenv)==-1)
                 perror("Imposible ejecutar");
 }
 
