@@ -15,6 +15,7 @@ int numtrozos;           //Lleva la cuenta del numero de palabras introducidas
 char linea[MAXLINEA];    //Guarda absolutamente todo lo escrito por terminal 
 char ruta[PATH_MAX];     //Array para guardar el path 
 char memory;             //utilizada como variable global en el memory 
+extern char **environ;
 
 extern char ** entorno;
 
@@ -1499,16 +1500,13 @@ char *NombreSenal(int sen)  /*devuelve el nombre senal a partir de la senal*/
   return ("SIGUNKNOWN");
 }
 
-void printVar(char **env, char *name){
-        int i = 0;
-        for(i = 0; env[i] != NULL; i++){
-                printf("olaaaaaa\n");
-                char * path = malloc(MAXVAR*sizeof(char*));
-                path=getenv(env[i]); 
-                                printf("olaaaaaa\n");
-                printf("%p->%s[%d]=(%p) %s \n", &env[i], name, i, env[i], path); //es el ultimo argumento el que peta 
+void printVar(char *env[], char *nom_env){
+        int i;
+
+        while(env[i] != NULL){
+                printf("%p->%s[%d]=(%p) %s\n", &env[i], nom_env, i, env[i], env[i]);
+                i++;        
         }
-       // printf("%p->%s[%d]=(%p) \n", &env[0], name, i, env[0]);
 }
 
 /**
@@ -1528,6 +1526,7 @@ void printVar(char **env, char *name){
 void funShowVar(char *arg3[]){
         int i, j;
         char *value;
+
         if(numtrozos == 1){
                 //printVar(arg3, "main arg3");
         } else if (numtrozos == 2 ){
