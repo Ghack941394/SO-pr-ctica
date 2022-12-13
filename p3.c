@@ -245,25 +245,6 @@ void funAyuda(){
         } 
 }
 
-/**
- * Function: funFin
- * ----------------------
- * Function that serves to end 
- * the execution of the shell.
- *            
- * @return void.
- */
-void funFin(tList *listhistorial, tListMem *listmemoria, tListP *listaprocesos){
-        removeElement(listhistorial);
-        funDealloc(listmemoria,1); 
-        tPosP p = firstp(*listaprocesos);
-        while (p!=NULL){
-                removeElementp(listaprocesos,p); 
-                p = nextp(p,*listaprocesos);
-        }
-        exit(0);
-}
-
 //////////////////////////////////// P1 ///////////////////////////////////////////
 
 /**
@@ -723,382 +704,573 @@ void funDeltree(){
 
 //////////////////////////////////////////////////////P2///////////////////////////////////////////////////////////////////////
 
+/**
+ * Function: Recursiva
+ * ----------------------
+ * Calls the recursive function 
+ * n times.
+ *
+ * @param n number of times to run.
+ *
+ * @return void.
+ */
 void Recursiva (int n){
-  char automatico[TAMANO];
-  static char estatico[TAMANO];
+        char automatico[TAMANO];
+        static char estatico[TAMANO];
 
-  printf ("parametro:%3d(%p) array %p, arr estatico %p\n",n,&n,automatico, estatico);
+        printf ("parametro:%3d(%p) array %p, arr estatico %p\n", n, &n, automatico, estatico);
 
-  if (n>0)
-    Recursiva(n-1);
+        if (n > 0){
+                Recursiva(n-1); 
+        }
 }
 
-
+/**
+ * Function: LlenarMemoria
+ * -----------------------
+ * Fills the memory at the address 
+ * and with the indicated size (bytes) 
+ * with the indicated character. 
+ *
+ * @param dir direction from which 
+ *            it will be filled.
+ * @param tam size with which to fill 
+ *            the memory.
+ * @param character with which we fill 
+ *                  the memory.
+ *
+ * @return void.
+ */
 void LlenarMemoria(char *dir, int tam, char character){
-  int i;
+        int i;
 
-  printf("Llenando %d bytes de memoria con el char '%c' a partir de la direccion %p\n", tam, character, dir);
+        printf("Llenando %d bytes de memoria con el char '%c' a partir de la direccion %p\n", tam, character, dir);
 
-  for (i = 0; i < tam; i++)
-		dir[i] = character;            
+        for (i = 0; i < tam; i++){
+                dir[i] = character; //LLena con el caracter cada espacio de la memoria en dicha direccion
+        }	            
 }
 
-void Do_pmap () /*sin argumentos*/
- { pid_t pid;       /*hace el pmap (o equivalente) del proceso actual*/
-   char elpid[32];
-   char *argv[3]={"pmap",elpid,NULL};
-   
-   sprintf (elpid,"%d", (int) getpid());
-   if ((pid=fork())==-1){
-      perror ("Imposible crear proceso");
-      return;
-      }
-   if (pid==0){
-      if (execvp(argv[0],argv)==-1){
-         perror("cannot execute pmap (linux, solaris)");
-      }
-      exit(1);
-   }
-   waitpid(pid, NULL, 0);
+/**
+ * Function: Do_pmap
+ * -----------------------
+ * Map the current process.
+ *
+ * @return void.
+ */
+void Do_pmap(){ 
+        pid_t pid;       /*hace el pmap (o equivalente) del proceso actual*/
+        char elpid[32];
+        char *argv[3] = {"pmap", elpid, NULL};
+        
+        sprintf (elpid, "%d", (int) getpid());          //Imprime el pid con el formato de entero metiendolo en elpid
+        if ((pid = fork()) == -1){                      //FORK: crea un clon idéntico del proceso que la ejecutó.
+                perror ("Imposible crear proceso");
+                return;
+        }
+        if (pid == 0){
+                if (execvp(argv[0], argv) == -1){
+                        perror("Cannot execute pmap (linux, solaris)");
+                }
+                exit(1);
+        }
+        waitpid(pid, NULL, 0); //Espera por el final del proceso
  }
 
-
-
-//Función para printar Lista de alloc/delloc
+/**
+ * Function: printListMm
+ * -----------------------
+ * Displays the necessary list 
+ * depending on the function that 
+ * calls it.
+ *
+ * @param L list of memory information. 
+ * @param tipo option to execute of the  
+ *             function that calls it. 
+ *
+ * @return void.
+ */
 void printListMm(tListMem L, char *tipo){
-         int all = 1; //flag para ver se imprimo a lista completa , canto tipo = all
+        int all = 1;                                    //flag para ver si imprimo la lista completa [-All]
+        
         printf("******Lista de bloques asignados "); 
-        if (strcmp("all",tipo)!=0){
-                printf("%s ", tipo);
+        if (strcmp("all", tipo) != 0){                  //si el tipo no es -all
+                printf("%s ", tipo);                    //imprimo el tipo de lista que se quiere
                 all = 0;
         }
         printf("para el proceso %d\n\n", getpid());
          
-        if(!isEmptyListm(L)){
-                tPosMem p = firstm(L);
+        if(!isEmptyListm(L)){                           //si la lista no esta vacia
+                tPosMem p = firstm(L);                  
                 tItemMem d;
-                while (p!=NULL){
-                        d = getItemm(p, L);
-                        if(strcmp(d.tipo, tipo)==0 || all){
-                                printf("   %p%10d  %s ", d.direc, d.tam, d.tempo);
-                                if(strcmp(d.tipo,"mmap")==0 )
-				        printf("%s (descriptor %d)",d.nomefich, d.df);
-			        if(strcmp(d.tipo,"shared")==0 || strcmp(d.tipo,"malloc")==0)
-				        printf("%s ",d.tipo);
-                                if (strcmp(d.tipo,"shared")==0)
+                while (p != NULL){                      //mientras la lista tenga elementos
+                        d = getItemm(p, L);             
+                        if(strcmp(d.tipo, tipo) == 0 || all){  
+                                printf("   %p%10d  %s ", d.direc, d.tam, d.tempo);  //tempo: fecha y hora de creacion
+                                if(strcmp(d.tipo,"mmap") == 0 )
+				        printf("%s (descriptor %d)",d.nomefich, d.df); //df: descriptor -> num que asigna el kernel indicando desde donde se lee y envia bytes en la pila
+			        if(strcmp(d.tipo, "shared") == 0 || strcmp(d.tipo, "malloc") == 0)
+				        printf("%s", d.tipo);
+                                if (strcmp(d.tipo, "shared") == 0)
                                         printf("(key %d)", d.chave);  
                                 printf("\n");           
                         }
                         p = nextm(p, L);
 		}
-        }
+        } 
 }
 
-//Función auxiliar para insertar elementos á lista de memoria según os parámetros
-void AuxInsertElememMem(void *dire, int tam, char *tipo, int chave, char *nfich, int df, tListMem *L ){
+/**
+ * Function: AuxInsertElememMem
+ * -----------------------
+ * Helper function to insert 
+ * elements to the memory list 
+ * according to the parameters.
+ *
+ * @param dire memory address.
+ * @param tam frame size.
+ * @param tipo option to execute of the  
+ *             function that calls it. 
+ * @param chave key if it is a shared 
+ *              or mapped block.  
+ * @param nfich file name.
+ * @param df file descriptor.
+ * @param L list of memory information. 
+ *
+ * @return void.
+ */
+void AuxInsertElememMem(void *dire, int tam, char *tipo, int chave, char *nfich, int df, tListMem *L){
         tItemMem d;
         time_t data_t;
         time(&data_t);
         struct tm *data;
+        int mmap = 0, shared = 0;
 
-        int mmap=0, shared=0;
-
-        if(strcmp(tipo, "shared") == 0)
+        if(strcmp(tipo, "shared") == 0){
                 shared = 1;
-        if(strcmp(tipo, "mmap") == 0)
-                mmap = 1;
+        }
 
-        if ((data= localtime(&data_t))==NULL)
+        if(strcmp(tipo, "mmap") == 0){
+                mmap = 1;
+        }
+
+        if ((data = localtime(&data_t)) == NULL){
                 perror("time\n");
-        strcpy(d.tempo, asctime(data));   // engado o tempo e data
-        d.direc = dire; //engado direc
-        d.tam = tam; //engado tam
-        strcpy(d.tipo, tipo); //engado tipo
-        d.chave = chave; //en shared ou mmap engado chave, se non é 0
-        d.df = df; //descriptor de fich, que se non é mmap é -1
-        if (mmap)
-                strcpy(d.nomefich, nfich);  // en mmap nome do fich
-        
-        //inserto elemento
+        }     
+
+        strcpy(d.tempo, asctime(data));         //convertimos la fecha y hora a string y lo colocamos en d.tempo 
+        d.direc = dire;                         //ponemos el valor de la direccion
+        d.tam = tam;                            //ponemos el valor del tamaño 
+        strcpy(d.tipo, tipo);                   //copiamos en d.tipo la opcion
+        d.chave = chave;                        //en shared o mmap añadimos la clave, si no es 0
+        d.df = df;                              //descriptor de fich, que se non es mmap é -1
+        if (mmap){
+                strcpy(d.nomefich, nfich);      //en mmap ponemos tambien el nombre del fichero
+        }
+        //Insertamos el elemento
         insertElementm(d, L);
 }
 
 
-
-//Auxiliar dada para obtener segmento de memoria
+/**
+ * Function: ObtenerMemoriaShmget
+ * ------------------------------
+ * Helper function to get 
+ * memory segment.
+ *
+ * @param clave key of a shared 
+ *              block.
+ * @param tam frame size.   
+ * @param flag indicator that allows 
+ *             us to know if the key is shared.
+ * @param L list of memory information. 
+ *
+ * @return void.
+ */
 void * ObtenerMemoriaShmget (key_t clave, size_t tam, int flag, tListMem *L){ //flag para insertar na lista o tamaño segun se é created = 0 ou shared = 1
-    void * p;
-    int aux,id,flags=0777;
+    void * p;                                           //sera la memoria 
+    int aux, id, flags = 0777;
     struct shmid_ds s;
-    if (tam)     /*tam distito de 0 indica crear */
-        flags=flags | IPC_CREAT | IPC_EXCL;
-    if (clave==IPC_PRIVATE)  /*no nos vale*/
-        {errno=EINVAL; return NULL;}
-    if ((id=shmget(clave, tam, flags))==-1)//Se non podo encontrar ese seg. de memoria , null, se si, identificador
+    if (tam){                                           /*tam distinto de 0 indica crear */
+        flags = flags | IPC_CREAT | IPC_EXCL;
+    }                                            
+        
+    if (clave == IPC_PRIVATE){                           /*no nos vale*/
+        errno = EINVAL; 
+        return NULL;
+    }
+
+    if ((id = shmget(clave, tam, flags)) == -1){         //shmget devuelve el id de la clve que se le pasa, si no es creada devuelve -1
         return (NULL);
-    if ((p=shmat(id,NULL,0))==(void*) -1){// unha vez que sei o identificador, miro a ver cal é a súa dir de memoria
-        aux=errno;
-        if (tam || s.shm_segsz) // se o tam non é cero : (Nota: cando é shared só teño a chave, por ende para obter o tamaña uso s.shm_segz)
-             shmctl(id,IPC_RMID,NULL); // permite que poda recibir a info so segmento
-        errno=aux;
+    }    
+
+    if ((p = shmat(id, NULL, 0)) == (void*) -1){        //unha vez que sei o identificador, miro a ver cal é a súa dir de memoria
+        aux = errno;
+        if (tam || s.shm_segsz){                         //se o tam non é cero : (Nota: cando é shared só teño a chave, por ende para obter o tamaña uso s.shm_segz)
+             shmctl(id, IPC_RMID, NULL);                //permite que poda recibir a info so segmento
+        }     
+        errno = aux;
         return (NULL);
     }
-    shmctl (id,IPC_STAT,&s);// permite que poda recibir a info so segmento
-    if(flag)
+
+    shmctl (id,IPC_STAT, &s);                            //permite que poda recibir a info so segmento
+    if(flag){
         tam = s.shm_segsz;
-    AuxInsertElememMem(p,tam,"shared",clave,NULL,-1,L);
+    }
+    AuxInsertElememMem(p, tam, "shared", clave, NULL, -1, L);
     return (p);
 }
 
-//Función auxiliar dada para facer o allocate tanto shared como createshared
+/**
+ * Function: do_AllocateCreateshared
+ * ---------------------------------
+ * Helper function that we use to 
+ * allocate with shared keys 
+ * (createshared and shared).
+ *
+ * @param L list of memory information. 
+ *
+ * @return void.
+ */
 void do_AllocateCreateshared (tListMem *L){
-   key_t cl;
-   size_t tam;
-   tItemMem d;
-   tPosMem p = firstm(*L);
-   int flagCreate = 0;
-   int flagShared = 0;
-   //flags para distinguir cando crear chave  e asignar segmento de me compartida ou só asignar
-   if(strcmp(trozos[1],"-shared")==0)
-        flagShared = 1;
-   if(strcmp(trozos[1],"-createshared")==0)
-        flagCreate = 1;
+        key_t cl;
+        size_t tam;
+        tItemMem d;
+        tPosMem p = firstm(*L);
+        int flagCreate = 0, flagShared = 0;                             //flags para distinguir cuando crear clave y asignar segmento de memoria compartida o solo asignar
 
-   if ((numtrozos==2 && flagShared) || (numtrozos < 3 && flagCreate))
-        printListMm(*L, "shared");             
+        if(strcmp(trozos[1], "-shared") == 0){
+                flagShared = 1;
+        }
 
-   else{
-        cl=(key_t)  strtoul(trozos[2],NULL,10);
-        if(trozos[3]!=NULL) 
-                tam=(size_t) strtoul(trozos[3],NULL,10); // para convertilo nun unsigned lon
-        else
-                tam=0;
-        if (tam==0 && flagCreate) { //se me pasan 0 bytes
-	        perror("No se asignan bloques de 0 bytes\n");
-	        return;
-        }
-        if (flagCreate){ // se teño que crear chave
-                if ((p=ObtenerMemoriaShmget(cl,tam,0,L))!=NULL)
-		        printf ("Asignados %lu bytes en %p\n",(unsigned long) tam, p);
-                else
-	        	printf("Imposible asignar memoria compartida clave %lu:%s\n",(unsigned long) cl,strerror(errno));
-        }
-        if (flagShared){//Se non
-                if ((p=ObtenerMemoriaShmget(cl,tam,1,L))!=NULL)
-                        printf("Memoria compartida de clave %lu en %p\n",(unsigned long) cl,p);             
-                else
-                        perror("Imposible obtener memoria shmget\n");
-        } 
+        if(strcmp(trozos[1], "-createshared") == 0){
+                flagCreate = 1;
+        }     
+
+        if (((numtrozos == 2) && flagShared) || ((numtrozos < 3) && flagCreate)){
+                printListMm(*L, "shared");  
+        } else {
+                cl = (key_t)  strtoul(trozos[2], NULL, 10);                                     //convertimos la clave en un tipo unsigned en base 10
+                
+                if(trozos[3] != NULL){
+                        tam = (size_t) strtoul(trozos[3], NULL, 10);                            //para convertilo en un unsigned long
+                } else {
+                        tam = 0;
+                }
+
+                if ((tam == 0) && flagCreate) {                                                 //si se me pasan 0 bytes
+                        perror("No se asignan bloques de 0 bytes\n");
+                        return;
+                }
+
+                if (flagCreate){                                                                //si tengo que crear una clave
+                        if ((p = ObtenerMemoriaShmget(cl, tam, 0, L)) != NULL){
+                                printf("Asignados %lu bytes en %p\n", (unsigned long) tam, p);
+                        } else {
+                                printf("Imposible asignar memoria compartida clave %lu:%s\n", (unsigned long) cl, strerror(errno));
+                        }
+                }
+
+                if (flagShared){                                                                //Si no
+                        if ((p = ObtenerMemoriaShmget(cl, tam, 1, L)) != NULL){
+                                printf("Memoria compartida de clave %lu en %p\n", (unsigned long) cl,p);
+                        } else {
+                                perror("Imposible obtener memoria shmget\n");
+                        }
+                } 
         }
 }
 
-//Función auxiliar dada para mapear ficheiros, devolve NULL en caso de erro
-
-void * MapearFichero (char * fichero, int protection, tListMem *L){
-    int df, map=MAP_PRIVATE,modo=O_RDONLY;
+/**
+ * Function: MapearFichero
+ * -----------------------
+ * Helper function that maps files.
+ *
+ * @param fichero file.
+ * @param protection protection.
+ * @param L list of memory information. 
+ *
+ * @return void.
+ */
+void * MapearFichero (char *fichero, int protection, tListMem *L){
+    int df, map = MAP_PRIVATE, modo = O_RDONLY;
     struct stat s;
     void *p;
     int tam;
 
-    if (protection&PROT_WRITE)
-          modo=O_RDWR; // podo ler e escribir se teño permisos
-    if (stat(fichero,&s)==-1 || (df=open(fichero, modo))==-1)
-          return NULL;
-    if ((p=mmap (NULL,s.st_size, protection,map,df,0))==MAP_FAILED) //se podo 
-           return NULL;
-    
-    tam = s.st_size; //gardo o tamaño do ficheiro na variable tam
-    AuxInsertElememMem(p, tam, "mmap", 0, fichero, df, L);
+    if (protection&PROT_WRITE){
+          modo = O_RDWR;                                                   //puedo leer y escribir si tengo permisos
+    }
 
+    if (stat(fichero, &s) == -1 || (df = open(fichero, modo)) == -1){
+          return NULL;
+    }
+
+    if ((p = mmap(NULL, s.st_size, protection, map, df, 0)) == MAP_FAILED){ //si puedo 
+           return NULL;
+    }
+
+    tam = s.st_size;                                                       //guardo el tamaño del fichero en la variable tam
+    AuxInsertElememMem(p, tam, "mmap", 0, fichero, df, L);
     return p;
 }
 
-//Aux mmap dada
+/**
+ * Function: do_AllocateMmap
+ * -------------------------
+ * Helper function in which 
+ * we allocate a mapped 
+ * memory block.
+ *
+ * @param L list of memory information. 
+ *
+ * @return void.
+ */
 void do_AllocateMmap(tListMem *L){ 
-     char *perm;
-     void *p;
-     int protection=0;
-     tItemMem d;
-     tPosMem pos = firstm(*L);
-     
-     if ((numtrozos==2 && strcmp(trozos[1], "-mmap")==0))
-            printListMm(*L,"mmap");
-     
-     else{
-        if ((perm=trozos[3])!=NULL && strlen(perm)<4) {
-            if (strchr(perm,'r')!=NULL) protection|=PROT_READ;
-            if (strchr(perm,'w')!=NULL) protection|=PROT_WRITE;
-            if (strchr(perm,'x')!=NULL) protection|=PROT_EXEC;
-        }
-        if ((p=MapearFichero(trozos[2],protection, L))==NULL)// Se non podo mapear
-             perror ("Imposible mapear fichero");
-        else // Se sí :
-             printf ("fichero %s mapeado en %p\n", trozos[2], p);
-     }
+        char *perm;
+        void *p;
+        int protection = 0;
+        tItemMem d;
+        tPosMem pos = firstm(*L);
+        
+        if((numtrozos == 2 && strcmp(trozos[1], "-mmap") == 0)){
+                printListMm(*L,"mmap");
+        } else {
+                if (((perm = trozos[3]) != NULL) && (strlen(perm) < 4)) {           //strlen: devuelve la longitud de una cadena de texto
+                        if (strchr(perm,'r') != NULL) protection|=PROT_READ;      
+                        if (strchr(perm,'w')!=NULL) protection|=PROT_WRITE;
+                        if (strchr(perm,'x')!=NULL) protection|=PROT_EXEC;      
+                }
+
+                if ((p = MapearFichero(trozos[2], protection, L)) == NULL){      //Se non podo mapear
+                        perror ("Imposible mapear fichero");
+                } else {                                                         // Se si
+                        printf ("fichero %s mapeado en %p\n", trozos[2], p);
+                }
+        }   
 }
 
-//Aux malloc feita por nós 
+/**
+ * Function: do_AllocateMalloc
+ * ---------------------------
+ * Allocate a block of 
+ * memory with malloc.
+ *
+ * @param L list of memory information. 
+ *
+ * @return void.
+ */
 void do_AllocateMalloc(tListMem *L){
-        void *dire; //direción de memoria onde vou asignar o bloque
-        int tama; //tamaño do bloque 
-        if (trozos[2]!=NULL){
-                tama = atoi(trozos[2]); // para pasar o string a enteiro
-                if (tama>0){
-                        if ((dire = malloc(tama))!=NULL){ // se poodo asignar memoria
-                                AuxInsertElememMem(dire, tama, "malloc", 0 ,NULL,-1, L);
+        void *dire;     //direcion de memoria donde se va a asignar el bloque
+        int tama;       //tamaño del bloque 
+
+        if (trozos[2] != NULL){
+                tama = atoi(trozos[2]);         // para pasar el string a entero
+                if (tama > 0){
+                        if ((dire = malloc(tama)) != NULL){ // se puedo asignar memoria
+                                AuxInsertElememMem(dire, tama, "malloc", 0, NULL, -1, L);
                                 printf("Asignados %d bytes en %p\n", tama, dire);
-                        }else
+                        } else {
                                 perror("malloc");
-                
-                }else if (trozos[2]<0){
+                        }
+                } else if (trozos[2] < 0) {
                         printf("uso: allocate [-malloc|-shared|-createshared|-mmap] ....\n");
-                }else{
+                } else {
                         printf("No se asignan bloques de 0 bytes\n");
                 }
-        }else
-                 printListMm(*L,"malloc");
+        } else {
+                printListMm(*L, "malloc");       
+        }
 }
 
-
-//Función para opcións do allocate
+/**
+ * Function: funAlloc
+ * ---------------------
+ * Determine how we are 
+ * going to allocate the 
+ * memory block.
+ *
+ * @param L list of memory information. 
+ *
+ * @return void.
+ */
 void funAlloc(tListMem *L){      
-        if (numtrozos>1){
+        if (numtrozos > 1){
                 
-                if(strcmp("-malloc", trozos[1]) == 0)
+                if(strcmp("-malloc", trozos[1]) == 0){
                         do_AllocateMalloc(L);
-                else if(strcmp("-mmap", trozos[1]) == 0)
+                } else if(strcmp("-mmap", trozos[1]) == 0){
                         do_AllocateMmap(L);
-                else if((strcmp("-shared", trozos[1]) == 0) || (strcmp("-createshared", trozos[1])==0))
+                } else if((strcmp("-shared", trozos[1]) == 0) || (strcmp("-createshared", trozos[1]) == 0)){
                         do_AllocateCreateshared(L);
-                else
+                } else {
                         printf("uso: allocate [-malloc|-shared|-createshared|-mmap] ....\n");
-        }else
-                printListMm(*L, "all"); 
-        
+                }
+        } else {
+                printListMm(*L, "all");         //si solo se pone "allocate"
+        }
 }
 
-//Aux delkey dada para borrar as chaves creadas con createshared 
-void do_DeallocateDelkey (){
-   key_t clave;
-   int id;
-   char *key=trozos[2];
+/**
+ * Function: do_DeallocateDelkey
+ * -----------------------------
+ * Helper function that deletes 
+ * the keys created with createshared.
+ *
+ * @return void.
+ */
+void do_DeallocateDelkey(){
+        key_t clave;
+        int id;
+        char *key = trozos[2];
 
-   if (key==NULL || (clave=(key_t) strtoul(key,NULL,10))==IPC_PRIVATE){
-        printf ("      delkey necesita clave_valida\n");
-        return;
-   }
-   if ((id=shmget(clave,0,0666))==-1){
-        perror ("shmget: imposible obtener memoria compartida");
-        return;
-   }
-   if (shmctl(id,IPC_RMID,NULL)==-1) //establezco con shmctl que a chave que teña ese identificador sexa borrada ( con ipc_rmid) 
-        perror ("shmctl: imposible eliminar memoria compartida\n");
+        if (key == NULL || (clave = (key_t) strtoul(key, NULL, 10)) == IPC_PRIVATE){
+                printf ("      delkey necesita clave_valida\n");
+                return;
+        }
+
+        if ((id = shmget(clave, 0, 0666)) == -1){
+                perror ("shmget: imposible obtener memoria compartida");
+                return;
+        }
+
+        if (shmctl(id, IPC_RMID, NULL) == -1){ //establezco con shmctl que a chave que teña ese identificador sexa borrada ( con ipc_rmid) 
+                perror ("shmctl: imposible eliminar memoria compartida\n");
+        }        
 }
 
-
-//Aux xeral dealloc para deasignar o bloque de memoria que teña a dirección dada por parámetro 
-
-void do_Deallocate(tListMem *L, int flag){ //flag=0 se é para facer deallocate con dirección , flag=1 se é para sair e facer free a toda a lista
+/**
+ * Function: do_Deallocate
+ * ------------------------
+ * Designates the block of 
+ * memory that has the address 
+ * passed by parameter.
+ *
+ * @param L list of memory information. 
+ *
+ * @return void.
+ */
+void do_Deallocate(tListMem *L, int flag){      //flag = 0 si es para hacer deallocate con direccion, flag = 1 se es para salir y hacer free a toda la lista
         char *dir;
         tPosMem p;
         tItemMem d;
 
-        if( !flag && sscanf(trozos[1],"0x%p",&dir)==0 ){ // comprobo se a dir que me dan é valida 
-                perror("Dirección no válida\n"); return;
+        if(!flag && sscanf(trozos[1], "0x%p", &dir) == 0){                  //comprobo se a dir que me dan é valida
+                perror("Dirección no válida\n"); 
+                return;
         }
-
 
         if(!isEmptyListm(*L)){
-
-        p = firstm(*L);
-
-        if(!flag){
-        while (p!=NULL){// recorro a lista para ver se teño esa dirección
-                d = getItemm(p,*L);
-                if (strcmp(dir, d.direc)==0) // salgo se a encontro
-                        break;
-                p = nextm(p,*L);            
-        }
-        
-        if(p!=NULL){ // se p non é null porque encontrouse a dirección e existe na miña lista
-                
-                if( (strcmp("malloc", d.tipo) == 0) ){
-                        free(d.direc);
-                }else if(strcmp("shared", d.tipo) == 0){
-                        shmdt(d.direc);
-                }else if( strcmp("mmap", d.tipo) == 0){
-                        munmap(d.direc, d.tam);
-                }else{
-                        printf("\n");
-                }
-                removeElementm(L,p);
-        }else
-        	printf("Dirección %s no asignada con malloc, shared o mmap\n",trozos[1]);
-        }
-        else{   
-                while (p!=NULL){// recorro a lista para liberar mem
-                        d = getItemm(p,*L);
-                        if( (strcmp("malloc", d.tipo) == 0) ){
-                                free(d.direc);
-                        }else if(strcmp("shared", d.tipo) == 0){
-                                shmdt(d.direc);
-                        }else if( strcmp("mmap", d.tipo) == 0){
-                                munmap(d.direc, d.tam);
-                        }else{
-                                printf("\n");
+                p = firstm(*L);
+                if(!flag){
+                        while (p != NULL){                                        //recorro a lista para ver se teño esa dirección
+                                d = getItemm(p, *L);
+                                if (strcmp(dir, d.direc) == 0){                    // salgo se a encontro
+                                        break;
+                                }
+                                p = nextm(p,*L);            
                         }
-                        removeElementm(L,p); 
-                        p = nextm(p,*L);                  
+                
+                        if(p != NULL){                                            //se p non é null porque encontrouse a dirección e existe na miña lista
+                                if(strcmp("malloc", d.tipo) == 0){
+                                        free(d.direc);
+                                }else if(strcmp("shared", d.tipo) == 0){
+                                        shmdt(d.direc);
+                                }else if( strcmp("mmap", d.tipo) == 0){
+                                        munmap(d.direc, d.tam);
+                                }else{
+                                        printf("\n");
+                                }
+                                removeElementm(L, p);
+                        }else{
+                                printf("Dirección %s no asignada con malloc, shared o mmap\n", trozos[1]);
+                        }
+                }else{
+                        while (p != NULL){                                      // recorro a lista para liberar mem
+                                d = getItemm(p,*L);
+                                if( (strcmp("malloc", d.tipo) == 0)){
+                                        free(d.direc);
+                                }else if(strcmp("shared", d.tipo) == 0){
+                                        shmdt(d.direc);
+                                }else if( strcmp("mmap", d.tipo) == 0){
+                                        munmap(d.direc, d.tam);
+                                }else{
+                                        printf("\n");
+                                }
+                                removeElementm(L,p); 
+                                p = nextm(p,*L);         
+                        }
+                
                 }
-        }
+                
         }else{
-        	if(!flag)
-                        printf("Dirección %s no asignada con malloc, shared o mmap\n",trozos[1]);
+                if(!flag){
+                        printf("Dirección %s no asignada con malloc, shared o mmap\n", trozos[1]);
+                }
         }
 }
 
-//Aux  dealloc con malloc para deasignar o bloque de memoria que teña x tamaño dado
+/**
+ * Function: do_DeallocateMalloc
+ * -----------------------------
+ * Designate the block of memory 
+ * with a given size created by malloc.
+ *
+ * @param L list of memory information. 
+ *
+ * @return void.
+ */
 void do_DeallocateMalloc(tListMem *L){
         tPosMem p;
         tItemMem d;
 
         if (numtrozos == 2){
                 printListMm(*L, "malloc");
-        }
-        else{
+        }else{
                 int tama = atoi(trozos[2]);
-        
                 p = firstm(*L);
-
-                while (p!=NULL){
+                while (p != NULL){
                         d = getItemm(p,*L);
-
-                        if (strcmp(d.tipo,"malloc")==0) // como recorro toda a lista teño que indicar que me mire se é malloc
-                                if (d.tam == tama )// Se encontra un tamaño igual, colleme ese para borralo
+                        if (strcmp(d.tipo,"malloc") == 0){       // como recorro toda a lista teño que indicar que me mire se é malloc
+                                if (d.tam == tama ){             // Se encontra un tamaño igual, colleme ese para borralo
                                         break;
+                                }        
+                        }                
                         p = nextm(p,*L);
                 }
-                if (p!=NULL){
+                
+                if (p != NULL){
                         free(d.direc);
                         removeElementm(L,p);
-                }
-                else
+                } else {
                         printListMm(*L, "malloc");
+                }
         }
-
 }
-//Aux  dealloc con shared para deasignar o bloque de memoria compartida que teña x chave dada
+
+/**
+ * Function: do_DeallocateShared
+ * -----------------------------
+ * Designate the blocks in which 
+ * they have been assigned with 
+ * the shared option.
+ *
+ * @param L list of memory information. 
+ *
+ * @return void.
+ */
 void do_DeallocateShared(tListMem *L){
         tPosMem p;
         tItemMem d;
         int s;
-        if (numtrozos == 2)
+        if (numtrozos == 2){
                 printListMm(*L,"shared");
-        else{
+        } else {
                 int chave = atoi(trozos[2]);
                 p = firstm(*L);
+                
                 //recoro a lista para ver se atopo a chave 
-                while (p!=NULL){
+                while (p != NULL){
                         d = getItemm(p,*L);
                         if (strcmp(d.tipo,"shared") == 0){
                                 if (d.chave == chave)
@@ -1106,183 +1278,264 @@ void do_DeallocateShared(tListMem *L){
                         }
                         p = nextm(p,*L);
                 }
-                //se a encontro 
-                if (p!=NULL){
+                //si la encuentro 
+                if (p != NULL){
                         s = shmdt(d.direc);
-                        if (s!=-1){
+                        if (s != -1){
                                 removeElementm(L,p);
-                        }else
+                        }else{
                                 perror("shmdt: Imposible desmapear el bloque de memoria compartida\n");
-                }else // se non existe :
+                        }
+                }else{ //si no existe 
                         printf("No hay bloque de esa clave mapeado en el proceso\n");
+                }        
         }
-
 }
 
-//Aux  dealloc con mmap para deasignar o bloque de memoria que teña  asignado ese ficheiro dado
+/**
+ * Function: do_DeallocateMmap
+ * ---------------------------
+ * Designate the allocated memory 
+ * block with the mmap option 
+ * with the given file.
+ *
+ * @param L list of memory information. 
+ *
+ * @return void.
+ */
 void do_DeallocateMmap(tListMem *L){
         tPosMem p;
         tItemMem d;
 
-        if (numtrozos == 2)
+        if (numtrozos == 2){
                 printListMm(*L,"mmap");
-        else{
+        } else {
                 p = firstm(*L);
-                while (p!=NULL){ // recorro a lista para ver se alunha dirección ten ese fich
+                while (p != NULL){                                              // recorro la lista para ver si alguna direccion tiene ese fichero
                         d = getItemm(p,*L);
-                        if(strcmp(d.tipo,"mmap")==0){
-                                if(strcmp(trozos[2],d.nomefich)==0)
+                        if(strcmp(d.tipo,"mmap") == 0){
+                                if(strcmp(trozos[2], d.nomefich) == 0)
                                         break;
                         }
                         p = nextm(p,*L);
                 }
-                if (p!=NULL){//se encotro o ficheiro na lista
-                        munmap(d.direc, d.tam);
+
+                if (p != NULL){                                                 //se encuentro el fichero en la lista
+                        munmap(d.direc, d.tam);                                 //munmap: borra las ubicaciones para el rango de direcciones especificado; produce referencias a las direcciones dentro del rango a fin de generar referencias a memoria inválidas.
                         removeElementm(L, p);
-                }
-                else
+                } else {
                         printf("Fichero %s no mapeado\n", trozos[2]);        
+                }
         }
 }
 
-
-//Función para opcións do deallocate
+/**
+ * Function: funDealloc
+ * ---------------------------
+ * Determine how we are 
+ * going to designate the 
+ * memory block.
+ *
+ * @param L list of memory information. 
+ *
+ * @return void.
+ */
 void funDealloc(tListMem *L, int flag){
         if (numtrozos>1){
                 
-                if(strcmp("-malloc", trozos[1]) == 0)
+                if(strcmp("-malloc", trozos[1]) == 0){
                         do_DeallocateMalloc(L);
-                else if(strcmp("-mmap", trozos[1]) == 0)
+                } else if(strcmp("-mmap", trozos[1]) == 0){
                         do_DeallocateMmap(L);
-                else if((strcmp("-shared", trozos[1]) == 0))
+                } else if((strcmp("-shared", trozos[1]) == 0)){
                         do_DeallocateShared(L);
-                else if((strcmp("-delkey", trozos[1]) == 0))
+                } else if((strcmp("-delkey", trozos[1]) == 0)){
                         do_DeallocateDelkey();
-                else{
-                        do_Deallocate(L,flag);
+                } else {
+                        do_Deallocate(L, flag);
                 }
-        }else
-                if(flag)
-                        do_Deallocate(L,flag);
-                else
-                        printListMm(*L, "all"); 
-
+        }else{
+                if(flag){
+                        do_Deallocate(L, flag);
+                }else{
+                        printListMm(*L, "all");         //si solo le pasamos "deallocate"
+                }
+        }        
 }
 
-
-//Funcións para o comando i-o 
-
-//Función auxiliar dada por SO para ler ficheiros
+/**
+ * Function: LeerFichero
+ * -----------------------
+ * Read files.
+ *
+ * @param f file name. 
+ * @param p memory adreess. 
+ * @param cont file size. 
+ *
+ * @return ssize_t.
+ */
 ssize_t LeerFichero (char *f, void *p, size_t cont){
-   struct stat s;
-   ssize_t  n;  
-   int df,aux;
+        struct stat s;
+        ssize_t  n;  
+        int df, aux;
 
-   if (stat (f,&s)==-1 || (df=open(f,O_RDONLY))==-1)//se non se pode abrir 
-	return -1;     
-   if (cont==-1)   /* si pasamos -1 como bytes a leer lo leemos entero*/
-	cont=s.st_size;
-   if ((n=read(df,p,cont))==-1){ // se non se pode ler
-	aux=errno;
-	close(df);
-	errno=aux;
-	return -1;
-   }
-   close (df);
-   return n;
+        if (stat (f, &s) == -1 || (df = open(f, O_RDONLY)) == -1){       //se non se pode abrir 
+                return -1;
+        }
+
+        if (cont == -1){                                                   /* si pasamos -1 como bytes a leer lo leemos entero*/
+                cont = s.st_size;
+        }
+
+        if ((n = read(df, p, cont)) == -1){                             // se non se pode ler
+                aux = errno;
+                close(df);
+                errno = aux;
+                return -1;
+        }
+        close (df);
+        return n;    
 }
 
-//Opción read do comando i-o 
+/**
+ * Function: do_I_O_read
+ * ----------------------
+ * Read files with command i-o.
+ *
+ * @return void.
+ */
 void do_I_O_read (){
    void *p;
-   size_t cont=-1;
+   size_t cont = -1;
    ssize_t n;
-   if (numtrozos<5){
+
+   if (numtrozos < 5){
 	printf ("faltan parametros\n");
 	return;
    }
-   p=(void*) strtoul(trozos[3],NULL,16) ;  /*convertimos de cadena a puntero*/
-   if (trozos[4]!=NULL) //Comprobación para que non dei erro atoll
-	cont=(size_t) atoll(trozos[4]); // atoll pasa de string a  long
+   
+   p = (void*) strtoul(trozos[3], NULL, 16);            /*convertimos de cadena a puntero*/
 
-   if ((n=LeerFichero(trozos[2],p,cont))==-1) //Se temos algún erro ao  ler 
+   if (trozos[4] != NULL){                               //Comprobación para que non dei erro atoll
+	cont = (size_t) atoll(trozos[4]);               //atoll pasa de string a long
+   }     
+
+   if ((n = LeerFichero(trozos[2], p, cont)) == -1){     //Se temos algún erro ao ler 
 	perror ("Imposible leer fichero");
-   else //Se non lemos 
-	printf ("leidos %lld bytes de %s en %p\n",(long long) n,trozos[2],p);
+   } else {                                                 //Se lemos 
+	printf ("leidos %lld bytes de %s en %p\n", (long long) n, trozos[2], p);
+   }     
 }
 
-//Función auxiliar dada por SO para escribir/sobrescribir ficheiros
-ssize_t EscribirFichero (char *f, void *p, size_t cont,int overwrite){
-   ssize_t  n;
-   int df,aux, flags=O_CREAT | O_EXCL | O_WRONLY; 
+/**
+ * Function: EscribirFichero
+ * --------------------------
+ * Write and overwrite files.
+ *
+ * @param f file name. 
+ * @param p memory adreess. 
+ * @param cont file size. 
+ * @param overwrite flag if are 
+ *                  overwrite.
+ * 
+ * @return void.
+ */
+ssize_t EscribirFichero (char *f, void *p, size_t cont, int overwrite){
+        ssize_t  n;
+        int df, aux, flags=O_CREAT | O_EXCL | O_WRONLY; 
 
-   if (overwrite) // se teño a opción -o de sobrescribir 
-	flags=O_CREAT | O_WRONLY | O_TRUNC; //doulle estes permisos , porque O_TRUNC permite que un ficheiro existente trunque a lonxitude
-        //se non , quedome con O_EXCL que combinado co de creación solta unn erro se xa existe o ficheiro
-   if ((df=open(f,flags,0777))==-1)
-	return -1;
+        if (overwrite)                                       // se teño a opción -o de sobrescribir 
+                flags=O_CREAT | O_WRONLY | O_TRUNC;          //doulle estes permisos, porque O_TRUNC permite que un ficheiro existente trunque a lonxitude
+        //se non, quedome con O_EXCL que combinado co de creación solta unn erro se xa existe o ficheiro
+        if ((df = open(f, flags, 0777)) == -1)
+                return -1;
 
-   if ((n=write(df,p,cont))==-1){//escribo fich
-	aux=errno;
-	close(df);
-	errno=aux;
-	return -1;
-   }
-   close (df);
-   return n;
+        if ((n = write(df, p, cont)) == -1){                 //escribo fich
+                aux = errno;
+                close(df);
+                errno = aux;
+                return -1;
+        }
+        close (df);
+        return n;
 }
 
-//Opción write do comando i-o 
+/**
+ * Function: do_I_O_write
+ * -----------------------
+ * Write files with command i-o.
+ *
+ * @return void.
+ */
 void do_I_O_write(){
         void *p;
-        size_t cont=-1;
+        size_t cont = -1;
         ssize_t n;
 
-        if ((numtrozos<5 && strcmp("-o",trozos[2])!=0) || (numtrozos<6 && strcmp("-o", trozos[2])==0)){
-                printf("faltan parametros\n");
+        if ((numtrozos < 5 && strcmp("-o", trozos[2]) != 0) || (numtrozos < 6 && strcmp("-o", trozos[2]) == 0)){
+                printf("Faltan parametros\n");
                 return;
         }else{  
-                if((strcmp(trozos[2],"-o")==0)){ // Se teño a opción de sobrescribir
+                if((strcmp(trozos[2],"-o") == 0)){                        // Se teño a opción de sobrescribir
 
-                        p=(void*) strtoul(trozos[4],NULL,16); // paso a cadea a punteiro
+                        p = (void*) strtoul(trozos[4], NULL, 16);         // paso a cadea a punteiro
                 
-                        if (trozos[5]!=NULL) //paso o número de bytes a ler de cadea a long
-	                        cont=(size_t) atoll(trozos[5]);
+                        if (trozos[5] != NULL){
+	                        cont = (size_t) atoll(trozos[5]);         //paso o número de bytes a ler de cadea a long
+                        }                          
     		
-                        if((n=EscribirFichero(trozos[3], p, cont, 1))==-1){ // Se falla a escfritura:
+                        if((n = EscribirFichero(trozos[3], p, cont, 1)) == -1){ // Se falla a escritura:
     		        	perror("Imposible escribir el fichero\n");
-                        }else// Se non, escribo
-    		                printf("escritos %s bytes en %s desde %p\n",trozos[5],trozos[3],p);
-  	        }else{ //Se non sobreescribo
-                //Fago o mesmo pero con trozos nunha posición menos porque non teño -o
-    		        p=(void*) strtoul(trozos[3],NULL,16);
-                        if (trozos[4]!=NULL)
-	                        cont=(size_t) atoll(trozos[4]);
-    	        	if((n=EscribirFichero(trozos[2],p,cont,0))==-1){
-    		        	perror("Imposible  escribir el fichero\n");
+                        }else{                                                   // Se non, escribo
+    		                printf("escritos %s bytes en %s desde %p\n", trozos[5], trozos[3], p);
+                        }        
+  	        }else{ //Se non sobreescribo fago o mesmo pero con trozos nunha posición menos porque non teño -o
+    		        p = (void*) strtoul(trozos[3], NULL, 16);
+                        if (trozos[4] != NULL){
+                                cont = (size_t) atoll(trozos[4]);
+                        }
+
+    	        	if((n = EscribirFichero(trozos[2], p, cont, 0)) == -1){
+    		        	perror("Imposible escribir el fichero\n");
     			        return;
-    	        	}else
+    	        	}else{
     		        	printf("escritos %s bytes en %s desde %p\n",trozos[4],trozos[2],p);
+                        }
                 }
         }
 }
 
-
-//Función i-o para escribir ou leer dunha direccion a un fich e viceversa
+/**
+ * Function: funIo
+ * -----------------------
+ * Write or read from an address 
+ * to a file and viceversa.
+ *
+ * @return void.
+ */
 void funIo(){
-        if (numtrozos == 1)
+        if (numtrozos == 1){
                 printf("uso: e-s [read|write] ......\n");
-        else{
-                if(strcmp(trozos[1],"read")==0) //para ler
+        }else{
+                if(strcmp(trozos[1],"read") == 0){ //para leer
                         do_I_O_read();
-                else if (strcmp(trozos[1],"write")==0) // para escribir
+                }        
+                else if (strcmp(trozos[1],"write")==0){ // para escribir
                         do_I_O_write();
-                else
+                }else{
                         printf("uso: e-s [read|write] ......\n");
+                }
         }
 }
 
-
+/**
+ * Function: funMemDump
+ * -----------------------
+ * Dumps the contents of 
+ * memory to the screen.
+ *
+ * @return void.
+ */
 void funMemDump(){
     int bytes, cont = 0, cont1 = 0, cont2 = 0;
     char *dir;
@@ -1299,11 +1552,11 @@ void funMemDump(){
 
     while (cont < bytes) {
 
-        if (isprint(dir[cont])){             //comprueba si un carácter es un carácter imprimible o no             
-                printf("%2c ", dir[cont]);   //imprimos los caracteres
+        if (isprint(dir[cont])){                //comprueba si el carácter es un carácter imprimible o no             
+                printf("%2c ", dir[cont]);      //imprimos los caracteres
         }
         else{
-                printf("   ");               //si no es un caracter imprimible, un espacio 
+                printf("   ");                  //si no es un caracter imprimible, un espacio
         } 
         cont++;
 
@@ -1311,7 +1564,7 @@ void funMemDump(){
             printf("\n");
             cont1 = 0;
             while (cont1 < 25 && cont2 < bytes) {
-                printf("%02x ", (unsigned char) dir[cont2]); //imprimimos el char en hexadecimal 
+                printf("%02x ", (unsigned char) dir[cont2]);    //imprimimos el char en hexadecimal
                 cont2++;
                 cont1++;
             }
@@ -1322,6 +1575,14 @@ void funMemDump(){
     printf("\n");
 }
 
+/**
+ * Function: funMemFill
+ * -----------------------
+ * Fills the memory with 
+ * one character.
+ *
+ * @return void.
+ */
 void funMemFill(){
         int tam = 128;
         char *dir;
@@ -1363,9 +1624,19 @@ void funMemFill(){
         }
 }
 
+/**
+ * Function: funMemory
+ * -----------------------
+ * Shows information on the 
+ * memory of the process.
+ *
+ * @param L list of memory information.
+ *  
+ * @return void.
+ */
 void funMemory(tListMem *L){
 
-        // Variables locais
+        // Variables locales
         int numero = 18;
         char character = 'd';
         double decimales = 8.1;
@@ -1383,12 +1654,12 @@ void funMemory(tListMem *L){
                printf("Variables locales        %p,    %p,     %p\n"
                       "Variables globales       %p,    %p,     %p\n"
                       "Variables estaticas      %p,    %p,     %p\n", &numero, &character, &decimales, &L, &numtrozos, &memory, &num, &characters, &decimal);           
-        } else if (numtrozos > 1){  
-                if(strcmp ( trozos[1], "-blocks") == 0 || strcmp(trozos[1], "-all") == 0){
+        } else if (numtrozos > 1){
+                if(strcmp (trozos[1], "-blocks") == 0 || strcmp(trozos[1], "-all") == 0){
                         printListMm(*L, "all");      
                 } 
 
-                if(strcmp( trozos[1], "-funcs") == 0 || strcmp(trozos[1], "-all") == 0){
+                if(strcmp(trozos[1], "-funcs") == 0 || strcmp(trozos[1], "-all") == 0){
                         printf("Funciones programa      %p,    %p,     %p\n"
                                "Funciones libreria      %p,    %p,     %p\n", &funDelete, &funMemDump, &funAlloc, &printf, &malloc, &strcmp);        
                 }
@@ -1398,239 +1669,224 @@ void funMemory(tListMem *L){
                                "Variables globales       %p,    %p,     %p\n"
                                "Variables estaticas      %p,    %p,     %p\n", &numero, &character, &decimales, &L, &numtrozos, &memory, &num, &characters, &decimal);
                 }
-                
                 if(strcmp(trozos[1], "-pmap") == 0){
                         Do_pmap();
                 }        
         }
 }
 
-
-
-
-//Función recursiva de recursiva, chama n veces a función recursiva de parámetros
-void  funRecursiva(){
-        int n ;//parametro para invocar a función recursiva n veces 
+/**
+ * Function: funRecursiva
+ * -----------------------
+ * Calls the recursive parameter 
+ * function n times.
+ *  
+ * @return void.
+ */
+void funRecursiva(){
+        int n ; //parametro para invocar a función recursiva n veces 
         if (numtrozos > 1){
                 n = atoi(trozos[1]);
-                Recursiva(n);
+                (n);
         }
 }
 
 
 /////////////////////////////////////////////////////////////////// P3 ////////////////////////////////////////////////////////////////////
 
-int BuscarVariable (char *var, char *e[]){ /*busca una variable en el entorno que se le pasa como parámetro*/
+/**
+ * Function: BuscarVariable
+ * --------------------------
+ * Looks for a variable in the 
+ * environment that is passed 
+ * to it as a parameter.
+ *
+ * @param var variable.
+ * @param e array where the 
+ *          variable will be 
+ *          searched.
+ *                   
+ * @return int.
+ */
+int BuscarVariable (char *var, char *e[]){ 
         int pos = 0;
         char aux[MAXVAR];
         strcpy(aux, var);
-        strcat(aux, "=");
+        strcat(aux, "=");       
 
         while (e[pos] != NULL) {
-                if (!strncmp(e[pos], aux, strlen(aux))){
-                return (pos);
+                if (!strncmp(e[pos], aux, strlen(aux))){        //compara hasta n=(strlen(aux)) numeros de caracteres de la cadena e[pos] y la cadena aux
                 } else {
                         pos++;
                 }
         }
         errno = ENOENT; /* no hay tal variable */
-        return (-1);
+        return (-1);      
 }
 
-
-int CambiarVariable(char *var, char *valor, char *e[]){ /*cambia una variable en el entorno que se le pasa como parámetro*/                                                     
-        int pos;                                              /*lo hace directamente, no usa putenv*/
+/**
+ * Function: CambiarVariable
+ * --------------------------
+ * Changes a variable in the 
+ * environment that is passed 
+ * to it as a parameter. Without 
+ * using putenv. 
+ *
+ * @param var variable.
+ * @param valor new value.
+ * @param e array where the 
+ *          variable will be 
+ *          searched.
+ *                   
+ * @return int.
+ */
+int CambiarVariable(char *var, char *valor, char *e[]){                                                   
+        int pos;                                              
         char *aux;
         
         if ((pos = BuscarVariable(var, e)) == -1){
                 return(-1);
         }
         
-        if ((aux = (char *)malloc(strlen(var) + strlen(valor) + 2)) == NULL){
+        if ((aux = (char *)malloc(strlen(var) + strlen(valor) + 2)) == NULL){ //el +2 es por "=" y el caracter de fin del string 
                 return -1;
+                free(aux);
         }
         strcpy(aux, var);
         strcat(aux, "=");
         strcat(aux, valor);
         e[pos] = aux;
+        free(aux);
         return (pos);
 }
 
-/*para sistemas donde no hay (o no queremos usuar) execvpe*/
-char * Ejecutable (char *s)
-{
+/**
+ * Function: Ejecutable
+ * ----------------------
+ * Helper function for 
+ * systems where there is 
+ * no (or we don't want to use) 
+ * execvpe0. 
+ *
+ * @param var variable.
+ * @param valor new value.
+ * @param e array where the 
+ *          variable will be 
+ *          searched.
+ *                   
+ * @return char.
+ */
+char * Ejecutable (char *s){
  	char path[MAXPATHLEN];
  	static char aux2[MAXPATHLEN];
  	struct stat st;
  	char *p;
- 	if (s==NULL || (p=getenv("PATH"))==NULL)
+
+ 	if (s == NULL || (p = getenv("PATH")) == NULL)
  		return s;
- 	if (s[0]=='/' || !strncmp (s,"./",2) || !strncmp (s,"../",3))
-         return s;       /*is an absolute pathname*/
+ 	if (s[0] == '/' || !strncmp (s, "./", 2) || !strncmp (s, "../", 3))
+                return s;       /*is an absolute pathname*/
  	strncpy (path, p, MAXPATHLEN);
- 	for (p=strtok(path,":"); p!=NULL; p=strtok(NULL,":")){
-        sprintf (aux2,"%s/%s",p,s);
- 	   if (lstat(aux2,&st)!=-1)
+ 	for (p = strtok(path, ":"); p != NULL; p = strtok(NULL, ":")){
+        sprintf (aux2, "%s/%s", p, s);
+ 	   if (lstat(aux2, &st) != -1)
  		return aux2;
  	}
  	return s;
 }
 
+/**
+ * Function: OurExecpv
+ * ----------------------
+ * 
+ *
+ * @param file variable.
+ * @param argv new value.
+ * @param envp array where the 
+ *          variable will be 
+ *          searched.
+ *                   
+ * @return int.
+ */
 int OurExecvpe(const char *file, char *const argv[], char *const envp[])
 {
     return (execve(Ejecutable(file),argv, envp));
 }
 
-int ValorSenal(char * sen)  /*devuelve el numero de senial a partir del nombre*/ 
-{ 
-   int i;
-   for (i = 0; sigstrnum[i].nome != NULL; i++)
-   	if (!strcmp(sen, sigstrnum[i].nome))
- 		return sigstrnum[i].sinal;
-   return -1;
-}
 
-
-char *NombreSenal(int sen)  /*devuelve el nombre senal a partir de la senal*/ 
-{			/* para sitios donde no hay sig2str*/
-  int i;
-   for (i=0; sigstrnum[i].nome!=NULL; i++)
-   	if (sen==sigstrnum[i].sinal)
- 		return sigstrnum[i].nome;
-  return ("SIGUNKNOWN");
-}
-
-void printVar(char *env[], char *nom_env){
+/**
+ * Function: ValorSenal
+ * ----------------------
+ * Returns the number of 
+ * the signal from the name.
+ *
+ * @param sen signal name.
+ *                   
+ * @return int.
+ */
+int ValorSenal(char * sen){ 
         int i;
-
-        while(env[i] != NULL){
-                printf("%p->%s[%d]=(%p) %s\n", &env[i], nom_env, i, env[i], env[i]);
-                i++;        
-        }
+        for (i = 0; sigstrnum[i].nome != NULL; i++)
+                if (!strcmp(sen, sigstrnum[i].nome))
+                        return sigstrnum[i].sinal;
+        return -1;
 }
 
 /**
- * Function: funShowVar
- * ------------------------
- * Shows the value of 
- * an environment variable.
+ * Function: NombreSenal
+ * ----------------------
+ * Returns the name of 
+ * the signal from the signal 
+ * for sites where are not sig2str.
  *
- * @param arg3 array of the 
- *             third argument
- *             of main.
- * @param env environment 
- *            variable array. 
+ * @param sen signal.
+ *                   
+ * @return char.
+ */
+char *NombreSenal(int sen){			
+        int i;
+        for (i=0; sigstrnum[i].nome!=NULL; i++)
+                if (sen==sigstrnum[i].sinal)
+                        return sigstrnum[i].nome;
+        return ("SIGUNKNOWN");
+}
+
+/**
+ * Function: liberarEnv
+ * ----------------------
+ * Release the reserved 
+ * space in the function 
+ * funChangeVar.
+ *
+ * @param EnviromentL signal name.
  *                   
  * @return void.
  */
-void funShowVar(char *arg3[]){
-        int i, j;
-        char *value;
+void liberarEnv(tListE EnvironmentL) {
+    tPosE pos;
 
-        if(numtrozos == 1){
-                printVar(arg3, "main arg3");
-        } else if (numtrozos == 2 ){
-                if((value = getenv(trozos[1])) != NULL){
-                        if((i = BuscarVariable(trozos[1], arg3)) == -1 || (j = BuscarVariable(trozos[1], environ)) == -1){
-                                perror("Error: No existe esta varible");
-                        } else {
-                                printf("Con main arg3 %s (%p) @%p\n"
-                                       "Con environ %s (%p) @%p\n"
-                                       "Con getenv %s (%p)\n", arg3[i], arg3[i], &arg3[i], environ[j], environ[j], &environ[j], value, &value);   
-                        }
-                }else{
-                        printf("La variable \"%s\" no existe", trozos[1]);
-                }
-        }else{
-                printf("El formato no es el correcto\n");
-        }
+    for (pos = firstE(EnvironmentL); pos != LNULL; pos = nextE(pos, EnvironmentL)) {
+        free(getItemE(pos, EnvironmentL).name);
+    }
 }
 
+
 /**
- * Function: FunChangeVar
- * ---------------------
- * Shows the process environment.
+ * Function: funAuxgetPriority
+ * ----------------------------
+ * Auxiliary function to take the 
+ * priority of a process, if such 
+ * a process does not exist, it 
+ * returns its corresponding error.
  *
- * @param enviroment environment 
- *                   variable array. 
+ * @param pid number of process.
  *                   
- * @return void.
- */
-void funChangeVar(char *env[]){
-        int pos;
-        char *var;
-
-        if(numtrozos == 4){
-                if(strcmp(trozos[1], "-a") == 0){
-                        pos = CambiarVariable(trozos[2], trozos[3], env);
-                        if(pos == -1){
-                                perror("Error"); 
-                        }
-                }else if (strcmp(trozos[1], "-e") == 0){
-                        pos = CambiarVariable(trozos[2], trozos[3], env);
-                        if(pos == -1){
-                                perror("Error:"); 
-                        }
-                }else if(strcmp(trozos[1], "-p") == 0){
-                        var = malloc(strlen(trozos[2]) + strlen(trozos[3]) + 4);
-                        strcpy(var, trozos[2]);
-                        strcat(var, "=");
-                        strcat(var, trozos[3]);
-                        
-                        if(putenv(var) != 0){
-                                perror("Error"); 
-                                free(var);
-                                return;
-                        }
-                        //donde puedo liberar la variable var??
-                }else{
-                        printf("Uso: cambiarvar [-a|-e|-p] var valor\n");
-                        free(var);
-                        return;        
-                }
-                printf("La variable de entorno \"%s\" cambio su valor a \"%s\"\n", trozos[2], trozos[3]);
-        }else{
-                printf("Uso: cambiarvar [-a|-e|-p] var valor\n");          
-        }
-}
-
-/**
- * Function: funfork
- * ---------------------
- * Shows the process environment.
- *
- * @param enviroment environment 
- *                   variable array. 
- *                   
- * @return void.
- */
-/*void funfork(tListP *LP){
-	pid_t pid;
-        tPosP posP;
-	
-        if(numtrozos == 1){
-                if ((pid = fork()) == 0){
-                        if(!isEmptyListp(LP)){
-                                for(posP = firstp(*LP); posP != NULL; posP = nextp){
-                                removeElementp(LP, posP);
-                                }
-                        }
-		        printf ("ejecutando proceso %d\n", getpid());
-                }else if (pid != -1){
-                        waitpid (pid, NULL, 0);
-                }
-        }	
-}
-*/
-
-/**
- * Función auxiliar para coller a prioridade dun proceso,
- * Se non existe tal proceso devolve o seu erro correspondente
- */
+ * @return int.
+ */ 
 int funAuxgetPriority(int pid){
-        errno=0; // Se cando facemos get priority hai algún erro, errno pasa a ser -1 e imprimese a saída do erro
+        errno = 0; // Si cuando hacemos get priority hay algún error, errno pasa a ser -1 y se imprime la salída del error
         int prioridade = getpriority(PRIO_PROCESS, pid);
-        if(errno==0)
+        if(errno == 0)
                 return prioridade;
         else
                 perror("Imposible obtener la prioridad del proceso:");         
@@ -1639,18 +1895,17 @@ int funAuxgetPriority(int pid){
 
 /**
  * Function: funPriority
- * ------------------------
- *  
- * Muestra o cambia la prioridad 
- * del proceso pid a valor
+ * ------------------------ 
+ * Show or change the priority 
+ * of process pid at valor.
  *                   
  * @return void.
  */
 void funPriority(){
         
-        pid_t p;//pid do proceso a coller
-        int pri;//prioridade do proceso a cambiar ou mostrar
-        int valor; // valor polo cal se quere cambiar a prioridade do proceso
+        pid_t p;        //pid do proceso a coller
+        int pri;        //prioridade do proceso a cambiar ou mostrar
+        int valor;      // valor polo cal se quere cambiar a prioridade do proceso
         if(numtrozos==1)
                 p = getpid();
         else
@@ -1666,6 +1921,179 @@ void funPriority(){
                 pri = funAuxgetPriority(p);
                 printf("Prioridad del proceso %d es %d\n", p, pri);  
         }
+}
+
+/**
+ * Function: printVar
+ * -------------------- 
+ * Helper function to 
+ * show variables.
+ *                   
+ * @return void.
+ */
+void printVar(char *env[], char *nom_env){
+        int i = 0;
+        while(env[i] != NULL){
+                printf("%p->%s[%d]=(%p) %s\n", &env[i], nom_env, i, env[i], env[i]);
+                i++;        
+        }
+}
+
+/**
+ * Function: funShowVar
+ * ------------------------
+ * Shows the value of 
+ * an environment variable.
+ *
+ * @param arg3 array of the 
+ *             third argument
+ *             of main.
+ *                   
+ * @return void.
+ */
+void funShowVar(char *arg3[]){
+        int i, j;
+        char *value;
+        tItemE variable;
+
+        if(numtrozos == 1){                     //solo se escribe "showvar" 
+                printVar(arg3, "main arg3");    //entonces se printea el tercer argumento del main
+        } else if (numtrozos == 2){            //se le pone una variable de entorno
+                if((value = getenv(trozos[1])) != NULL){   //se obtiene el valor de la variable de entorno      
+                        j = BuscarVariable(trozos[1], environ); 
+                        if((i = BuscarVariable(trozos[1], arg3)) != -1){      //se busca la variable de entorno en arg3[] si se consigue se muestra en todo 
+                                printf("Con main arg3 %s (%p) @%p\n"            
+                                       "Con environ   %s (%p) @%p\n"
+                                       "Con getenv    %s (%p)\n", arg3[i], arg3[i], &arg3[i], environ[j], environ[j], &environ[j], value, &value);   //diferencia entre encontrarla pasandola por arg como con getenv      
+                        }else if(j != 1){       //aqui entra cuando la variable solo se encuentra en el entorno es decir fue creada por putenv
+                                printf("Con environ   %s (%p) @%p\n"
+                                       "Con getenv    %s (%p)\n", environ[j], environ[j], &environ[j], value, &value);
+                        }else{
+                                printf("Error: No existe esta varible\n");
+                        }
+                }else{
+                        printf("La variable \"%s\" no existe\n", trozos[1]);
+                }
+        }else{
+                printf("El formato no es el correcto\n");
+        }
+}
+
+/**
+ * Function: funChangeVar
+ * ---------------------
+ * Shows the process environment.
+ *
+ * @param arg3 array of the 
+ *             third argument
+ *             of main.
+ * @param lEnviron environmet list. 
+ *                   
+ * @return void.
+ */
+void funChangeVar(char *arg3[], tListE *lEnviron){
+        int pos;
+        char *var;
+        tItemE variable;
+
+        if(numtrozos == 4){
+                if(strcmp(trozos[1], "-a") == 0){       //se busca la variable en el array arg3[] del main
+                        pos = CambiarVariable(trozos[2], trozos[3], arg3);
+                        if(pos == -1){
+                                perror("Error"); 
+                        }
+                }else if(strcmp(trozos[1], "-e") == 0){        //se busca la variable en environ 
+                        pos = CambiarVariable(trozos[2], trozos[3], environ);
+                        if(pos == -1){
+                                perror("Error:"); 
+                        }
+                }else if(strcmp(trozos[1], "-p") == 0){         
+                        var = malloc(strlen(trozos[2]) + strlen(trozos[3]) + 2);        //strlen: calcula el tamaño de los string (+2 es por "=" y por el caracter de fin de string)
+                        strcpy(var, trozos[2]);
+                        strcat(var, "=");
+                        strcat(var, trozos[3]);
+
+                        if(putenv(var) != 0){       //si la variable existe se cambia el valor si no existe se crea
+                                perror("Error"); 
+                                free(var);
+                                return;
+                        }
+                }else{
+                        printf("Uso: changevar [-a|-e|-p] var valor\n");
+                        return;        
+                }
+
+                if(pos != -1){          //si no se produjo ningun error
+                        printf("La variable de entorno \"%s\" cambio su valor a \"%s\"\n", trozos[2], trozos[3]);
+                        variable.name = var;
+                        insertItemE(variable, lEnviron);        //añadimos la direccion del string en la lista para luego liberar la memoria reservada
+                }
+        }else{
+                printf("Uso: changevar [-a|-e|-p] var valor\n");          
+        }
+}
+
+void printAdd(char *arg3[]){
+        printf("environ:   %p (almacenado en %p)\n"
+               "main arg3: %p (almacenado en %p)\n", arg3, &arg3, environ, &environ);  
+}
+
+/**
+ * Function: funShowEnv
+ * ---------------------
+ * Shows the process 
+ * environment.
+ * 
+ * @param arg3 array of the 
+ *             third argument
+ *             of main.
+ *
+ * @return void.
+ */
+void funShowEnv(char *arg3[]){
+
+        if(numtrozos == 1){
+                printVar(arg3, "main arg3"); //se printea por el tercer argumento del main
+        }else if(numtrozos == 2){
+                if(strcmp(trozos[1], "-environ") == 0){
+                        printVar(environ, "eviron");    //se imprime la variable externa (environ) 
+                }else if(strcmp(trozos[1], "-addr") == 0){
+                        printAdd(arg3);         //se imprimen las direcciones de arg3[] y environ       
+                }
+        }else{
+                printf("Uso: showenv [-environ|-addr]\n");
+        }
+}
+
+/**
+ * Function: funfork
+ * ---------------------
+ * The shell does the fork 
+ * system call and waits for 
+ * its child to end.
+ *
+ * @param arg3 array of the 
+ *             third argument
+ *             of main.
+ *                   
+ * @return void.
+ */
+void funFork(tListP *LP){
+	pid_t pid;
+        tPosP posP;
+	
+        if(numtrozos == 1){
+                if ((pid = fork()) == 0){       //se crea el nuevo proceso 
+                        if(!isEmptyListp(*LP)){  
+                                for(posP = firstp(*LP); posP != NULL; posP = nextp(posP, *LP)){
+                                removeElementp(LP, posP); //se borran los procesos asociados al padre ya que al ser el hijo hereda todo pero el hijo realmente no tiene ningun proceso aun 
+                                }
+                        }
+		        printf ("Ejecutando proceso %d\n", getpid()); //el proceso hijo continua ejecutandose
+                }else if (pid != -1){
+                        waitpid (pid, NULL, 0);         //el proceso padre espera a que termine el hijo ç
+                }
+        }	
 }
 
 /**
@@ -1703,20 +2131,32 @@ void funExecute(){
                 varenv[k-1]=trozos[k];
                 k++;
         }
-
         //execución
         if(OurExecvpe(trozos[k],&trozos[k],varenv)==-1)
                 perror("Imposible ejecutar");
 }
 
-//Auxiliar para comprobar estado
-
+/**
+ * Function: funEstado
+ * ---------------------
+ * Helper function to check the state.
+ * Execute, without creating 
+ * the process, program with 
+ * arguments in an environment 
+ * containing only the variables 
+ * VAR1, VAR2...
+ * 
+ * @param listaprocesos process list.
+ * @param p position.
+ *                   
+ * @return void.
+ */
 void funEstado(tListP *listaprocesos, tPosP p){
         int estado;
         tItemP d = getItemp(p,*listaprocesos);
         //strcpy(d.estado,"TERMINADO");
         //d.sinal=0;
-        int pri;
+        int pri; //para establecer unha prioridade
         //Revisamos se hai algún cambio de estado
         if(waitpid(d.pid, &estado, WNOHANG | WUNTRACED | WCONTINUED) == d.pid){
                 if(WIFEXITED(estado)){
@@ -1760,7 +2200,6 @@ void funListJobs(tListP listaproc){
         }
 }
 
-
 /**
  * Function: funJob
  * ---------------------
@@ -1790,7 +2229,6 @@ void funJob(tListP *listaproc){
                                 }
                                 p = nextp(p,*listaproc);
                         }
-
                         if (q!= NULL){   
                                 estado = atoi(d.estado);     
                                 if(waitpid(pid,&estado,0) == -1)
@@ -1805,7 +2243,6 @@ void funJob(tListP *listaproc){
 
                         }else
                                 perror("Proceso no encontrado en segundo plano");        
-                        
                 }else{
                         pid = atoi(trozos[1]);
                         while (p!=NULL){
@@ -1819,11 +2256,9 @@ void funJob(tListP *listaproc){
                         if(q!=NULL){
                                 d = getItemp(q,*listaproc);
                                 if(lstat(d.comando,&buff)!=-1){
-
                                         printf("%d  %s p=%d %s %s (%d) %s",d.pid,d.usuario, d.prioridade,d.tempo, d.estado,buff.st_mode,d.comando);
                                 }
                         }
-
                                 d = getItemp(q,*listaproc);
                 }
                 
@@ -1839,8 +2274,7 @@ void funJob(tListP *listaproc){
  * ---------------------
  * Shows the process environment.
  *
- * @param listaproc
- *  lista de procesos
+ * @param listaprocesos process list.
  *                   
  * @return void.
  */
@@ -1887,6 +2321,25 @@ int TrocearCadena(char * cadena, char * trozos[]){
         return i;
 }
 
+/**
+ * Function: funFin
+ * ----------------------
+ * Function that serves to end 
+ * the execution of the shell.
+ *            
+ * @return void.
+ */
+void funFin(tList *listhistorial, tListMem *listmemoria, tListP *listaprocesos, tListE *listaEnvironment){
+        removeElement(listhistorial);
+        funDealloc(listmemoria,1); 
+        tPosP p = firstp(*listaprocesos);
+        while (p!=NULL){
+                removeElementp(listaprocesos,p); 
+                p = nextp(p,*listaprocesos);
+        }
+        liberarEnv(*listaEnvironment);
+        exit(0);
+}
 
 //Main
 int main(int argc, char *argv[], char *env[]){
@@ -1897,6 +2350,8 @@ int main(int argc, char *argv[], char *env[]){
         createListm(&listamemoria);
         tListP listaProcesos;
         createListp(&listaProcesos);
+        tListE listaEnvironment;
+        createEmptyListE(&listaEnvironment);
 
         while(1){
                 printf("-> ");
@@ -1916,7 +2371,7 @@ int main(int argc, char *argv[], char *env[]){
                                 }
                                 else if(strcmp(trozos[0], "fin") == 0 || strcmp(trozos[0], "bye") == 0 || strcmp(trozos[0], "salir") == 0){
                                         insertElement(d, &listhistorial);
-                                        funFin(&listhistorial, &listamemoria, &listaProcesos);
+                                        funFin(&listhistorial, &listamemoria, &listaProcesos, &listaEnvironment);
                                 }
                                 else if(strcmp(trozos[0], "allocate") == 0){
                                         insertElement(d, &listhistorial);
@@ -1930,15 +2385,23 @@ int main(int argc, char *argv[], char *env[]){
                                         insertElement(d, &listhistorial);
                                         funMemory(&listamemoria);
                                         break;
-                                }// else if (strcmp(trozos[0], "fork") == 0){
-                                   //     insertElement(d, &listhistorial);
-                                     //   funFork(&listaProcesos);
-                                       // break;        } 
-                                else if(strcmp(trozos[0], "showvar") == 0){
+                                }else if(strcmp(trozos[0], "showvar") == 0){
                                         insertElement(d,&listhistorial);
                                         funShowVar(env);
                                         break;
-                                }else if(strcmp(trozos[0], "job") == 0){
+                                }else if(strcmp(trozos[0], "changevar") == 0){
+                                        insertElement(d,&listhistorial);
+                                        funChangeVar(env, &listaEnvironment);
+                                        break;
+                                }else if(strcmp(trozos[0], "showenv") == 0){
+                                        insertElement(d,&listhistorial);
+                                        funShowEnv(env);
+                                        break;       
+                                }else if (strcmp(trozos[0], "fork") == 0){
+                                        insertElement(d, &listhistorial);
+                                        funFork(&listaProcesos);
+                                        break;        
+                                } else if(strcmp(trozos[0], "job") == 0){
                                         insertElement(d,&listhistorial);
                                         funJob(&listaProcesos);
                                         break;
