@@ -58,6 +58,8 @@ void funPriority();
 void funExecute();
 void funJob(tListP *Lp);
 void funListJobs(tListP Lp);
+void funDelJobs(tListP *Lp);
+
 
 
 struct cmd {
@@ -89,7 +91,6 @@ struct cmd comandos[] = {
         {"memdump", funMemDump},
         {"memfill", funMemFill},
         {"recurse",funRecursiva},
-        {"showvar",funShowVar},
         {"priority", funPriority},
         {"execute", funExecute},
         {NULL,NULL},

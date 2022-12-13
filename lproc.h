@@ -25,6 +25,7 @@ typedef struct {
   proc estado;
   proc comando;
   int prioridade; 
+  int sinal;
 }tItemP;
 
 struct tNodep{

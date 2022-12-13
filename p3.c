@@ -16,6 +16,8 @@ char linea[MAXLINEA];    //Guarda absolutamente todo lo escrito por terminal
 char ruta[PATH_MAX];     //Array para guardar el path 
 char memory;             //utilizada como variable global en el memory 
 
+extern char ** entorno;
+
 
 /**
  * Function: funAutores
@@ -1478,14 +1480,14 @@ int OurExecvpe(const char *file, char *const argv[], char *const envp[])
     return (execve(Ejecutable(file),argv, envp));
 }
 
-// int ValorSenal(char * sen)  /*devuelve el numero de senial a partir del nombre*/ 
-// { 
-//   int i;
-//   for (i = 0; sigstrnum[i].nombre != NULL; i++)
-//   	if (!strcmp(sen, sigstrnum[i].nombre))
-// 		return sigstrnum[i].senal;
-//   return -1;
-// }
+int ValorSenal(char * sen)  /*devuelve el numero de senial a partir del nombre*/ 
+{ 
+   int i;
+   for (i = 0; sigstrnum[i].nome != NULL; i++)
+   	if (!strcmp(sen, sigstrnum[i].nome))
+ 		return sigstrnum[i].sinal;
+   return -1;
+}
 
 
 char *NombreSenal(int sen)  /*devuelve el nombre senal a partir de la senal*/ 
@@ -1523,20 +1525,19 @@ void printVar(char **env, char *name){
  *                   
  * @return void.
  */
-void funShowVar(char *arg3[], char *env[]){
+void funShowVar(char *arg3[]){
         int i, j;
-        //char *value = malloc(MAXVAR*sizeof(char*));
         char *value;
         if(numtrozos == 1){
-                printVar(arg3, "main arg3");
+                //printVar(arg3, "main arg3");
         } else if (numtrozos == 2 ){
                 if((value = getenv(trozos[1])) != NULL){
-                        if((i = BuscarVariable(trozos[1], arg3) == -1) || ((j = BuscarVariable(trozos[1], env)) == -1)){
+                        if((i = BuscarVariable(trozos[1], arg3)) == -1 || (j = BuscarVariable(trozos[1], entorno)) == -1){
                                 perror("Error: No existe esta varible");
                         } else {
                                 printf("Con main arg3 %s (%p) @%p\n"
                                        "Con environ %s (%p) @%p\n"
-                                       "Con getenv %s (%p)\n", arg3[i], arg3[i], &arg3[i], env[j], env[j], &env[j], value, &value);   
+                                       "Con getenv %s (%p)\n", arg3[i], arg3[i], &arg3[i], entorno[j], entorno[j], &entorno[j], value, &value);   
                         }
                 }else{
                         printf("La variable \"%s\" no existe", trozos[1]);
@@ -1709,6 +1710,38 @@ void funExecute(){
                 perror("Imposible ejecutar");
 }
 
+//Auxiliar para comprobar estado
+
+void funEstado(tListP *listaprocesos, tPosP p){
+        int estado;
+        tItemP d = getItemp(p,*listaprocesos);
+        //strcpy(d.estado,"TERMINADO");
+        //d.sinal=0;
+        int pri;
+        //Revisamos se hai algún cambio de estado
+        if(waitpid(d.pid, &estado, WNOHANG | WUNTRACED | WCONTINUED) == d.pid){
+                if(WIFEXITED(estado)){
+                        strcpy(d.estado,"TERMINADO");
+                        d.sinal=0;       
+                }else if(WIFCONTINUED(estado)){
+                        strcpy(d.estado,"ACTIVO");
+                        d.sinal=SIGCONT;
+                }else if (WIFSIGNALED(estado)){
+                        strcpy(d.estado,"SENALADO");
+                        d.sinal=WTERMSIG(estado);
+                }
+                else if(WIFSTOPPED(estado)){
+                        strcpy(d.estado,"PARADO");
+                        d.sinal=WSTOPSIG(estado);
+                }else{
+                        strcpy(d.estado,"ACTIVO");
+                        d.sinal = -1;
+                }
+                pri= getpriority(PRIO_PROCESS, d.pid);
+                d.prioridade=pri;
+        }
+}
+
 /**
  * Function: FunListJobs
  * ---------------------
@@ -1723,6 +1756,7 @@ void funListJobs(tListP listaproc){
         tPosP p = firstp(listaproc);
         tItemP i = getItemp(p, listaproc);
         while (p!=NULL){
+                funEstado(&listaproc,p);
                 printf("%d %8s p=%d %s %s", i.pid, i.usuario, i.prioridade, i.tempo, i.estado );
         }
 }
@@ -1766,7 +1800,7 @@ void funJob(tListP *listaproc){
                                 if(WIFEXITED(estado)){
                                         printf("correctamente\n");
                                 }else if(WIFSIGNALED(estado)){
-                                        printf("por la señal %s\n",NombreSenal(estado));
+                                        printf("por la señal %s\n",NombreSenal(WTERMSIG(estado)));
                                 }
                                 removeElementp(listaproc,p);
 
@@ -1799,6 +1833,37 @@ void funJob(tListP *listaproc){
                         funListJobs(*listaproc);
         }
         
+}
+
+/**
+ * Function: funDelJobs
+ * ---------------------
+ * Shows the process environment.
+ *
+ * @param listaproc
+ *  lista de procesos
+ *                   
+ * @return void.
+ */
+void funDelJobs(tListP *listaprocesos){
+        tPosP p = firstp(*listaprocesos);
+        tItemP d ;
+        if(numtrozos>1) {
+        while (p!=NULL){
+                d = getItemp(p,*listaprocesos);
+                funEstado(listaprocesos,p);
+                if( strcmp(trozos[1],"-term") == 0 && strcmp(d.estado,"TERMINADO")==0)
+                        removeElementp(listaprocesos,p);
+                else if( strcmp(trozos[1],"-sig") == 0 && strcmp(d.estado, "SENALADO")==0)
+                        removeElementp(listaprocesos,p);
+                else
+                        removeElementp(listaprocesos,p);
+                p = nextp(p,*listaprocesos);
+        }
+        }else{
+                if (!isEmptyListp(*listaprocesos))
+                        funListJobs(*listaprocesos);
+        }
 }
 
 
@@ -1870,13 +1935,21 @@ int main(int argc, char *argv[], char *env[]){
                                    //     insertElement(d, &listhistorial);
                                      //   funFork(&listaProcesos);
                                        // break;        } 
-                                else if(strcmp(trozos[0], "job") == 0){
+                                else if(strcmp(trozos[0], "showvar") == 0){
+                                        insertElement(d,&listhistorial);
+                                        funShowVar(env);
+                                        break;
+                                }else if(strcmp(trozos[0], "job") == 0){
                                         insertElement(d,&listhistorial);
                                         funJob(&listaProcesos);
                                         break;
                                 }else if (strcmp(trozos[0], "listjobs") == 0){
                                         insertElement(d,&listhistorial);
                                         funListJobs(listaProcesos);
+                                        break;
+                                }else if(strcmp(trozos[0], "deljobs") == 0){
+                                        insertElement(d,&listhistorial);
+                                        funDelJobs(&listaProcesos);
                                         break;
                                 }else {
                                         fprintf(stderr, "%s '%s'\n", strerror(3), trozos[0]);
