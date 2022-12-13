@@ -52,7 +52,7 @@ void funMemFill();
 void funMemory(tListMem *L);
 void funRecursiva();
 void funShowenv();
-void funShowVar(char *arg3[], char *env[]);
+void funShowVar(char *env[], char *environ[]);
 void funChangeVar(char *env[]);
 void funPriority();
 void funExecute();

@@ -15,7 +15,7 @@ int numtrozos;           //Lleva la cuenta del numero de palabras introducidas
 char linea[MAXLINEA];    //Guarda absolutamente todo lo escrito por terminal 
 char ruta[PATH_MAX];     //Array para guardar el path 
 char memory;             //utilizada como variable global en el memory 
-
+extern char **environ;
 
 /**
  * Function: funAutores
@@ -1497,16 +1497,13 @@ char *NombreSenal(int sen)  /*devuelve el nombre senal a partir de la senal*/
   return ("SIGUNKNOWN");
 }
 
-void printVar(char **env, char *name){
-        int i = 0;
-        for(i = 0; env[i] != NULL; i++){
-                printf("olaaaaaa\n");
-                char * path = malloc(MAXVAR*sizeof(char*));
-                path=getenv(env[i]); 
-                                printf("olaaaaaa\n");
-                printf("%p->%s[%d]=(%p) %s \n", &env[i], name, i, env[i], path); //es el ultimo argumento el que peta 
+void printVar(char *env[], char *nom_env){
+        int i;
+
+        while(env[i] != NULL){
+                printf("%p->%s[%d]=(%p) %s\n", &env[i], nom_env, i, env[i], env[i]);
+                i++;        
         }
-       // printf("%p->%s[%d]=(%p) \n", &env[0], name, i, env[0]);
 }
 
 /**
@@ -1523,23 +1520,19 @@ void printVar(char **env, char *name){
  *                   
  * @return void.
  */
-void funShowVar(char *arg3[], char *env[]){
+void funShowVar(char *env[], char *environ[]){
         int i, j;
-        //char *value = malloc(MAXVAR*sizeof(char*));
         char *value;
+
         if(numtrozos == 1){
-                printVar(arg3, "main arg3");
-        } else if (numtrozos == 2 ){
-                if((value = getenv(trozos[1])) != NULL){
-                        if((i = BuscarVariable(trozos[1], arg3) == -1) || ((j = BuscarVariable(trozos[1], env)) == -1)){
-                                perror("Error: No existe esta varible");
-                        } else {
-                                printf("Con main arg3 %s (%p) @%p\n"
-                                       "Con environ %s (%p) @%p\n"
-                                       "Con getenv %s (%p)\n", arg3[i], arg3[i], &arg3[i], env[j], env[j], &env[j], value, &value);   
-                        }
-                }else{
-                        printf("La variable \"%s\" no existe", trozos[1]);
+                printVar(env, "main arg3");
+        } else if (numtrozos == 2){
+                if(i = BuscarVariable(trozos[1], env) == -1 || (j = BuscarVariable(trozos[1], environ)) == -1){
+                        perror("Error: No existe esta varible");
+                } else {
+                        printf("Con main arg3    %s (%p) @%p\n"
+                                "Con environ     %s (%p) @%p\n"
+                                "Con getenv      %s (%p)\n", env[i], env[i], &env[i], environ[j], environ[j], environ[j], getenv(trozos[1]), getenv(trozos[1]));   
                 }
         }else{
                 printf("El formato no es el correcto\n");
@@ -1878,6 +1871,10 @@ int main(int argc, char *argv[], char *env[]){
                                         insertElement(d,&listhistorial);
                                         funListJobs(listaProcesos);
                                         break;
+                                } else if (strcmp(trozos[0], "showvar") == 0){
+                                        insertElement(d, &listhistorial);
+                                        funShowVar(envp, environ);
+                                        break;       
                                 }else {
                                         fprintf(stderr, "%s '%s'\n", strerror(3), trozos[0]);
                                         insertElement(d, &listhistorial);
