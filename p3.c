@@ -15,9 +15,9 @@ int numtrozos;           //Lleva la cuenta del numero de palabras introducidas
 char linea[MAXLINEA];    //Guarda absolutamente todo lo escrito por terminal 
 char ruta[PATH_MAX];     //Array para guardar el path 
 char memory;             //utilizada como variable global en el memory 
-extern char **environ;
 
-extern char ** entorno;
+
+extern char **environ;
 
 
 /**
@@ -1528,15 +1528,15 @@ void funShowVar(char *arg3[]){
         char *value;
 
         if(numtrozos == 1){
-                //printVar(arg3, "main arg3");
+                printVar(arg3, "main arg3");
         } else if (numtrozos == 2 ){
                 if((value = getenv(trozos[1])) != NULL){
-                        if((i = BuscarVariable(trozos[1], arg3)) == -1 || (j = BuscarVariable(trozos[1], entorno)) == -1){
+                        if((i = BuscarVariable(trozos[1], arg3)) == -1 || (j = BuscarVariable(trozos[1], environ)) == -1){
                                 perror("Error: No existe esta varible");
                         } else {
                                 printf("Con main arg3 %s (%p) @%p\n"
                                        "Con environ %s (%p) @%p\n"
-                                       "Con getenv %s (%p)\n", arg3[i], arg3[i], &arg3[i], entorno[j], entorno[j], &entorno[j], value, &value);   
+                                       "Con getenv %s (%p)\n", arg3[i], arg3[i], &arg3[i], environ[j], environ[j], &environ[j], value, &value);   
                         }
                 }else{
                         printf("La variable \"%s\" no existe", trozos[1]);
