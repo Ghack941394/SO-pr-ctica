@@ -2211,10 +2211,12 @@ void funEstado(tListP *listaprocesos, tPosP p){
  */
 void funListJobs(tListP listaproc){
         tPosP p = firstp(listaproc);
-        tItemP i = getItemp(p, listaproc);
+        tItemP i;
         while (p!=NULL){
+                i = getItemp(p, listaproc);
                 funEstado(&listaproc,p);
-                printf("%d %8s p=%d %s %s", i.pid, i.usuario, i.prioridade, i.tempo, i.estado );
+                printf("%d %8s p=%d %s %s (perm) %s\n", i.pid, i.usuario, i.prioridade, i.tempo, i.estado, i.comando);
+                p = nextp(p,listaproc);
         }
 }
 
@@ -2370,6 +2372,7 @@ void funAuxExec(tListP *L, int flagSegundo, int p){
                 }
 
                 if(flagSegundo){ //se querese executar en segundo plano
+                        printf("%d",pid);
                         d.pid = pid;
                         d.prioridade = pri;
                         strcpy(d.usuario,user);
