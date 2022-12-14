@@ -1681,9 +1681,10 @@ void funPriority(){
 void funExecute(){
         pid_t pid = getpid();
         int pri, flagpri=0;
-        int i,j,s,k=1;
+        int i,j,s,k=1, l;
         char priori[5];
         char *varenv[10];
+        char *var[10];
 
         //para coller a prioridade
         for(i = 1; i<numtrozos && trozos[i][0]=='@'; i++){
@@ -1695,17 +1696,24 @@ void funExecute(){
                 pri = atoi(priori);        
                 break;
         }
+        printf("uwu\n");
         if(flagpri)
                 setpriority(PRIO_PROCESS,pid,pri);
 
-        //para coller as pariables de entorno
-        while (getenv(trozos[k])!=NULL){
+        //para coller as variables de entorno
+        
+        while ( trozos[k]!=NULL && getenv(trozos[k])!=NULL){
                 varenv[k-1]=trozos[k];
                 k++;
         }
-
+        //para coller parametros para o programa
+        l=k;
+        while ((l+1)<numtrozos){
+                var[l-k] = trozos[l+1];
+                l++;
+        }
         //execución
-        if(OurExecvpe(trozos[k],&trozos[k],varenv)==-1)
+        if(OurExecvpe(trozos[k],var,varenv)==-1)
                 perror("Imposible ejecutar");
 }
 
