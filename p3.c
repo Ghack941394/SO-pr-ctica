@@ -2341,6 +2341,7 @@ void funAuxExec(tListP *L, int flagSegundo, int p){
 
         //prioridade do proceso
         int pri;
+        printf("%d",p);
         if(p<(-20))
                 pri = getpriority(PRIO_PROCESS,pid);
         else
@@ -2397,7 +2398,6 @@ void otrosComandos(tListP *listaProcesos){
         int pri,i,s,j, flagpri=0;
         char *priori;
 
-        printf("uwu2\n");
         for(i = 0; i<numtrozos; i++){             
                 if(trozos[i][0]=='@'){
                 flagpri=1; // para saber se o usuario quere establecer prioridade 
@@ -2411,8 +2411,6 @@ void otrosComandos(tListP *listaProcesos){
         }
         if(!flagpri)
                 pri=-21;
-
-        printf("uwu3\n");
         if(strcmp(trozos[numtrozos - 1], "&") == 0){
                 trozos[--numtrozos] = NULL;
                 funAuxExec(listaProcesos,1,pri);
@@ -2535,7 +2533,6 @@ int main(int argc, char *argv[], char *env[]){
                                         funDelJobs(&listaProcesos);
                                         break;
                                 }else {
-                                        printf("uwu\n");
                                         otrosComandos(&listaProcesos);
                                         insertElement(d, &listhistorial);
                                         break;
