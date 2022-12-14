@@ -2111,8 +2111,8 @@ void funExecute(){
         int pri, flagpri=0;
         int i,j,s,k=1, l;
         char priori[5];
-        char *varenv[10];
-        char *var[10];
+        char *varenv[MAXPATHLEN];
+        char *var[MAXPATHLEN];
 
         //para coller a prioridade
         for(i = 1; i<numtrozos; i++){             
@@ -2129,12 +2129,13 @@ void funExecute(){
         if(flagpri)
                 setpriority(PRIO_PROCESS,pid,pri);
 
-        //para coller as variables de entorno
         
+        //para coller as variables de entorno
         while ( trozos[k]!=NULL && getenv(trozos[k])!=NULL){
                 varenv[k-1]=trozos[k];
                 k++;
         }
+        
         //para coller parametros para o programa
         l=k;
         while ((l+1)<numtrozos){
@@ -2143,8 +2144,14 @@ void funExecute(){
                 l++;
         }
         //execución
-        if(OurExecvpe(trozos[k],var,varenv)==-1)
+        if(k==1){//se k é igual a 1 significa que o usuario non escribiu variables de entorno, enton collo environ
+                if(OurExecvpe(trozos[k],var,environ)==-1)
                 perror("Imposible ejecutar");
+        }else{
+                if(OurExecvpe(trozos[k],var,varenv)==-1)
+                perror("Imposible ejecutar");
+        }
+        
 }
 
 /**
@@ -2310,6 +2317,106 @@ void funDelJobs(tListP *listaprocesos){
         }
 }
 
+//Auxiliar para coller o usuario
+char* funAuxGetUser(uid_t u){
+        struct passwd *p;
+        if((p=getpwuid(u))==NULL){
+		return("unkown");
+	}
+	return p->pw_name;
+}
+
+void funAuxExec(tListP *L, int flagSegundo, int p){ 
+        tItemP d;       
+        int i = 0;
+
+        //para coller o usuario
+        uid_t usuario = getuid();
+        char *user = funAuxGetUser(usuario);
+
+        //pid do proceso
+        pid_t pid = fork();
+
+        //prioridade do proceso
+        int pri;
+        if(p<(-20))
+                pri = getpriority(PRIO_PROCESS,pid);
+        else
+                pri = setpriority(PRIO_PROCESS,pid,p);
+        
+        //comando con opcións
+        char comando[MAXPATHLEN];
+        while (i<numtrozos){
+                strcpy(comando,trozos[i]);  
+                i++;
+        }
+
+        //tempo de creación
+        time_t data;
+        time(&data);
+        struct tm *dat;
+        if((dat = localtime(&data))==NULL)
+                perror("Error de data");
+
+        if(pid==0){
+                if (execvp(trozos[0],&trozos[0]) == -1)                {
+                        fprintf(stderr, "No se puede ejecutar el comando:%s\n", strerror(errno));
+                }
+                exit(255);// por se falla o execvp   
+        }else{  
+                if(pid==-1){
+                        fprintf(stderr, "No se puede ejecutar el comando:%s\n", strerror(errno));
+                        exit(255);
+                }
+
+                if(flagSegundo){ //se querese executar en segundo plano
+                        d.pid = pid;
+                        d.prioridade = pri;
+                        strcpy(d.usuario,user);
+                        strcpy(d.comando, comando);
+                        strcpy(d.tempo, asctime(dat));
+                        strcpy(d.estado, "ACTIVO");
+                        d.sinal=0;
+                        insertElementp(d,L);
+                }
+        }
+}
+
+
+/**
+ * Function: otrosComandos
+ * ----------------------
+ * Executa calquer comando linux
+ *            
+ * @return void.
+ */
+void otrosComandos(tListP *listaProcesos){
+        int pri,i,s,j, flagpri=0;
+        char *priori;
+
+        printf("uwu2\n");
+        for(i = 0; i<numtrozos; i++){             
+                if(trozos[i][0]=='@'){
+                flagpri=1; // para saber se o usuario quere establecer prioridade 
+                s = strlen(trozos[i]);
+                for (j = 1; j < s; j++){
+                        priori[j-1]=trozos[i][j];
+                }
+                pri = atoi(priori); 
+                break; 
+                }  
+        }
+        if(!flagpri)
+                pri=-21;
+
+        printf("uwu3\n");
+        if(strcmp(trozos[numtrozos - 1], "&") == 0){
+                trozos[--numtrozos] = NULL;
+                funAuxExec(listaProcesos,1,pri);
+        }else
+                funAuxExec(listaProcesos, 0, pri);
+}
+
 
 /**
  * Function: trocearCadena
@@ -2425,7 +2532,8 @@ int main(int argc, char *argv[], char *env[]){
                                         funDelJobs(&listaProcesos);
                                         break;
                                 }else {
-                                        fprintf(stderr, "%s '%s'\n", strerror(3), trozos[0]);
+                                        printf("uwu\n");
+                                        otrosComandos(&listaProcesos);
                                         insertElement(d, &listhistorial);
                                         break;
                                 }
