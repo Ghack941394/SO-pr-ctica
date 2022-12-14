@@ -17,6 +17,7 @@
 #include "historial.h"
 #include "lmem.h"
 #include "lproc.h"
+#include "lenv.h"
 #include<sys/shm.h>
 #include<sys/mman.h>
 #include<sys/ipc.h>
@@ -37,7 +38,7 @@ void funAyuda();
 void funPid();
 void funInfosis();
 void funCarpeta();
-void funFin(tList *L, tListMem *Lm, tListP *Lp);
+void funFin(tList *L, tListMem *Lm, tListP *Lp, tListE *Le);
 void funHist(tList *L);
 void funCreate();
 void funList();
@@ -53,13 +54,14 @@ void funMemory(tListMem *L);
 void funRecursiva();
 void funShowenv();
 void funShowVar(char *env[]);
-void funChangeVar(char *env[]);
+void funChangeVar(char *env[], tListE *Le);
+void funShowenv(char *env[]);
+void funFork(tListP *Lp);
 void funPriority();
 void funExecute();
 void funJob(tListP *Lp);
 void funListJobs(tListP Lp);
 void funDelJobs(tListP *Lp);
-
 
 
 struct cmd {
