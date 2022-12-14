@@ -1687,16 +1687,17 @@ void funExecute(){
         char *var[10];
 
         //para coller a prioridade
-        for(i = 1; i<numtrozos && trozos[i][0]=='@'; i++){
+        for(i = 1; i<numtrozos; i++){             
+                if(trozos[i][0]=='@'){
                 flagpri=1; // para saber se o usuario quere establecer prioridade 
                 s = strlen(trozos[i]);
                 for (j = 1; j < s; j++){
                         priori[j-1]=trozos[i][j];
                 }
-                pri = atoi(priori);        
-                break;
+                pri = atoi(priori); 
+                break; 
+                }  
         }
-        printf("uwu\n");
         if(flagpri)
                 setpriority(PRIO_PROCESS,pid,pri);
 
@@ -1709,7 +1710,8 @@ void funExecute(){
         //para coller parametros para o programa
         l=k;
         while ((l+1)<numtrozos){
-                var[l-k] = trozos[l+1];
+                if(trozos[l+1][0]!='@')
+                        var[l-k] = trozos[l+1];
                 l++;
         }
         //execución
