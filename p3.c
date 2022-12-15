@@ -1715,7 +1715,8 @@ int BuscarVariable (char *var, char *e[]){
         strcat(aux, "=");       
 
         while (e[pos] != NULL) {
-                if (!strncmp(e[pos], aux, strlen(aux))){        //compara hasta n=(strlen(aux)) numeros de caracteres de la cadena e[pos] y la cadena aux
+                if (!strncmp(e[pos], aux, strlen(aux))){//compara hasta n=(strlen(aux)) numeros de caracteres de la cadena e[pos] y la cadena aux
+                        return(pos);
                 } else {
                         pos++;
                 }
