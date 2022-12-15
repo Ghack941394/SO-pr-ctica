@@ -126,3 +126,5 @@ bool insertElementp(tItemP, tListP*);
 
 void removeElementp(tListP*, tPosP);
 
+void updateListp(tItemP d, tPosP p, tListP *L);
+

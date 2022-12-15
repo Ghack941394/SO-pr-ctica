@@ -67,3 +67,8 @@ if (p->next == NULL){
 }
 free(p);
 }
+
+void updateListp(tItemP d, tPosP p, tListP *L){
+  p->data = d;
+
+}

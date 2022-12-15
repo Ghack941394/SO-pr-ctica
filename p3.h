@@ -60,7 +60,7 @@ void funFork(tListP *Lp);
 void funPriority();
 void funExecute();
 void funJob(tListP *Lp);
-void funListJobs(tListP Lp);
+void funListJobs(tListP *Lp);
 void funDelJobs(tListP *Lp);
 
 

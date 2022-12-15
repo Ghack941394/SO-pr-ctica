@@ -2169,17 +2169,17 @@ void funExecute(){
  *                   
  * @return void.
  */
-void funEstado(tListP *listaprocesos, tPosP p){
+void funEstado(tListP *listaproc, tPosP p){
         int estado;
-        tItemP d = getItemp(p,*listaprocesos);
+        tItemP d = getItemp(p, *listaproc);
         //strcpy(d.estado,"TERMINADO");
         //d.sinal=0;
-        int pri; //para establecer unha prioridade
+        int pri; // hai que revisar se cambia a prioridade
         //Revisamos se hai algún cambio de estado
         if(waitpid(d.pid, &estado, WNOHANG | WUNTRACED | WCONTINUED) == d.pid){
                 if(WIFEXITED(estado)){
                         strcpy(d.estado,"TERMINADO");
-                        d.sinal=0;       
+                        d.sinal=WEXITSTATUS(estado);       
                 }else if(WIFCONTINUED(estado)){
                         strcpy(d.estado,"ACTIVO");
                         d.sinal=SIGCONT;
@@ -2191,11 +2191,12 @@ void funEstado(tListP *listaprocesos, tPosP p){
                         strcpy(d.estado,"PARADO");
                         d.sinal=WSTOPSIG(estado);
                 }else{
-                        strcpy(d.estado,"ACTIVO");
+                        strcpy(d.estado,"ERROR");
                         d.sinal = -1;
                 }
-                pri= getpriority(PRIO_PROCESS, d.pid);
-                d.prioridade=pri;
+                pri = getpriority(PRIO_PROCESS, d.pid);
+                d.prioridade=pri; // tamén actualizamos a prioridade
+                updateListp(d, p, listaproc);
         }
 }
 
@@ -2209,14 +2210,14 @@ void funEstado(tListP *listaprocesos, tPosP p){
  *                   
  * @return void.
  */
-void funListJobs(tListP listaproc){
-        tPosP p = firstp(listaproc);
+void funListJobs(tListP *listaproc){
+        tPosP p = firstp(*listaproc);
         tItemP i;
         while (p!=NULL){
-                i = getItemp(p, listaproc);
-                funEstado(&listaproc,p);
+                funEstado(listaproc,p);
+                i = getItemp(p, *listaproc);
                 printf("%d %8s p=%d %s %s (perm) %s\n", i.pid, i.usuario, i.prioridade, i.tempo, i.estado, i.comando);
-                p = nextp(p,listaproc);
+                p = nextp(p,*listaproc);
         }
 }
 
@@ -2241,6 +2242,7 @@ void funJob(tListP *listaproc){
         if(!(numtrozos==1 || (numtrozos==2 && strcmp(trozos[1],"-fg")==0))){
                 if(strcmp(trozos[1],"-fg")==0){
                         pid = atoi(trozos[2]);
+                        //busco o pid na lista
                         while (p!=NULL){
                                 d = getItemp(p,*listaproc);
                                 if(d.pid==pid){
@@ -2249,6 +2251,7 @@ void funJob(tListP *listaproc){
                                 }
                                 p = nextp(p,*listaproc);
                         }
+
                         if (q!= NULL){   
                                 estado = atoi(d.estado);     
                                 if(waitpid(pid,&estado,0) == -1)
@@ -2284,7 +2287,7 @@ void funJob(tListP *listaproc){
                 
         }else{  
                 if(!isEmptyListp(*listaproc))
-                        funListJobs(*listaproc);
+                        funListJobs(listaproc);
         }
         
 }
@@ -2303,8 +2306,8 @@ void funDelJobs(tListP *listaprocesos){
         tItemP d ;
         if(numtrozos>1) {
         while (p!=NULL){
-                d = getItemp(p,*listaprocesos);
                 funEstado(listaprocesos,p);
+                d = getItemp(p,*listaprocesos);
                 if( strcmp(trozos[1],"-term") == 0 && strcmp(d.estado,"TERMINADO")==0)
                         removeElementp(listaprocesos,p);
                 else if( strcmp(trozos[1],"-sig") == 0 && strcmp(d.estado, "SENALADO")==0)
@@ -2315,7 +2318,7 @@ void funDelJobs(tListP *listaprocesos){
         }
         }else{
                 if (!isEmptyListp(*listaprocesos))
-                        funListJobs(*listaprocesos);
+                        funListJobs(listaprocesos);
         }
 }
 
@@ -2526,7 +2529,7 @@ int main(int argc, char *argv[], char *env[]){
                                         break;
                                 }else if (strcmp(trozos[0], "listjobs") == 0){
                                         insertElement(d,&listhistorial);
-                                        funListJobs(listaProcesos);
+                                        funListJobs(&listaProcesos);
                                         break;
                                 }else if(strcmp(trozos[0], "deljobs") == 0){
                                         insertElement(d,&listhistorial);
