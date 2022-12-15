@@ -2216,7 +2216,7 @@ void funListJobs(tListP *listaproc){
         while (p!=NULL){
                 funEstado(listaproc,p);
                 i = getItemp(p, *listaproc);
-                printf("%d %8s p=%d %s %s (perm) %s\n", i.pid, i.usuario, i.prioridade, i.tempo, i.estado, i.comando);
+                printf("%d %8s p=%d %s %s (%d) %s\n", i.pid, i.usuario, i.prioridade, i.tempo, i.estado, i.sinal, i.comando);
                 p = nextp(p,*listaproc);
         }
 }
@@ -2253,7 +2253,8 @@ void funJob(tListP *listaproc){
                         }
 
                         if (q!= NULL){   
-                                estado = atoi(d.estado);     
+                                estado = atoi(d.estado); 
+
                                 if(waitpid(pid,&estado,0) == -1)
                                         perror("Imposible pasar proceso a primer plano"); 
                                 printf("El proceso %d fue terminado ", pid);
@@ -2279,7 +2280,7 @@ void funJob(tListP *listaproc){
                         if(q!=NULL){
                                 d = getItemp(q,*listaproc);
                                 if(lstat(d.comando,&buff)!=-1){
-                                        printf("%d  %s p=%d %s %s (%d) %s",d.pid,d.usuario, d.prioridade,d.tempo, d.estado,buff.st_mode,d.comando);
+                                        printf("%d  %s p=%d %s %s (%d) %s", d.pid, d.usuario, d.prioridade, d.tempo, d.estado, d.sinal, d.comando);
                                 }
                         }
                                 d = getItemp(q,*listaproc);
@@ -2344,7 +2345,7 @@ void funAuxExec(tListP *L, int flagSegundo, int p){
 
         //prioridade do proceso
         int pri;
-        printf("%d",p);
+        printf("%d\n",p);
         if(p<(-20))
                 pri = getpriority(PRIO_PROCESS,pid);
         else
@@ -2376,7 +2377,7 @@ void funAuxExec(tListP *L, int flagSegundo, int p){
                 }
 
                 if(flagSegundo){ //se querese executar en segundo plano
-                        printf("%d",pid);
+                        printf("%d\n",pid);
                         d.pid = pid;
                         d.prioridade = pri;
                         strcpy(d.usuario,user);
@@ -2416,7 +2417,7 @@ void otrosComandos(tListP *listaProcesos){
                 pri=-21;
         if(strcmp(trozos[numtrozos - 1], "&") == 0){
                 trozos[--numtrozos] = NULL;
-                funAuxExec(listaProcesos,1,pri);
+                funAuxExec(listaProcesos, 1, pri);
         }else
                 funAuxExec(listaProcesos, 0, pri);
 }
