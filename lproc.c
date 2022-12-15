@@ -69,6 +69,7 @@ free(p);
 }
 
 void updateListp(tItemP d, tPosP p, tListP *L){
-  p->data = d;
+  if(!isEmptyListp(*L))
+    p->data = d;
 
 }

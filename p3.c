@@ -2203,7 +2203,8 @@ void funEstado(tListP *listaproc, tPosP p){
 /**
  * Function: FunListJobs
  * ---------------------
- * Shows the process environment.
+ * Amosa a lista dos procesos que executan
+ * ou executaron en segundo plano.
  *
  * @param listaproc
  *  lista de procesos
@@ -2216,7 +2217,7 @@ void funListJobs(tListP *listaproc){
         while (p!=NULL){
                 funEstado(listaproc,p);
                 i = getItemp(p, *listaproc);
-                printf("%d %8s p=%d %s %s (perm) %s\n", i.pid, i.usuario, i.prioridade, i.tempo, i.estado, i.comando);
+                printf("%d %8s p=%d %s %s (%d) %s\n", i.pid, i.usuario, i.prioridade, i.tempo, i.estado,i.sinal, i.comando);
                 p = nextp(p,*listaproc);
         }
 }
@@ -2224,7 +2225,9 @@ void funListJobs(tListP *listaproc){
 /**
  * Function: funJob
  * ---------------------
- * Shows the process environment.
+ * Amosa información dun proceso que
+ * execute en segundo plano.
+ * Con -fg para pasalo a primer plano.
  *
  * @param listaproc
  *  lista de procesos
@@ -2239,11 +2242,13 @@ void funJob(tListP *listaproc){
         int estado;
         struct stat buff;
 
-        if(!(numtrozos==1 || (numtrozos==2 && strcmp(trozos[1],"-fg")==0))){
+        if(!(numtrozos==1 || ((numtrozos>1) && (strcmp(trozos[1],"-fg")!=0)))){
+                
                 if(strcmp(trozos[1],"-fg")==0){
                         pid = atoi(trozos[2]);
                         //busco o pid na lista
                         while (p!=NULL){
+                                funEstado(listaproc,p);
                                 d = getItemp(p,*listaproc);
                                 if(d.pid==pid){
                                         q = p;
@@ -2251,21 +2256,16 @@ void funJob(tListP *listaproc){
                                 }
                                 p = nextp(p,*listaproc);
                         }
+                        if (q!= NULL){
 
-                        if (q!= NULL){   
-                                estado = atoi(d.estado);     
+                                estado = atoi(d.estado);
                                 if(waitpid(pid,&estado,0) == -1)
                                         perror("Imposible pasar proceso a primer plano"); 
-                                printf("El proceso %d fue terminado ", pid);
-                                if(WIFEXITED(estado)){
-                                        printf("correctamente\n");
-                                }else if(WIFSIGNALED(estado)){
-                                        printf("por la señal %s\n",NombreSenal(WTERMSIG(estado)));
-                                }
+                                printf("Proceso %d pid ya está finalizado\n", pid);
                                 removeElementp(listaproc,p);
 
                         }else
-                                perror("Proceso no encontrado en segundo plano");        
+                                funListJobs(listaproc);      
                 }else{
                         pid = atoi(trozos[1]);
                         while (p!=NULL){
@@ -2277,45 +2277,61 @@ void funJob(tListP *listaproc){
                                 p = nextp(p,*listaproc);
                         }
                         if(q!=NULL){
+                                funEstado(listaproc,q);
                                 d = getItemp(q,*listaproc);
-                                if(lstat(d.comando,&buff)!=-1){
-                                        printf("%d  %s p=%d %s %s (%d) %s",d.pid,d.usuario, d.prioridade,d.tempo, d.estado,buff.st_mode,d.comando);
-                                }
+                                printf("%d  %s p=%d %s %s (%d) %s\n",d.pid,d.usuario, d.prioridade,d.tempo, d.estado,d.sinal,d.comando);
                         }
-                                d = getItemp(q,*listaproc);
                 }
                 
-        }else{  
+        }else{ 
                 if(!isEmptyListp(*listaproc))
                         funListJobs(listaproc);
         }
         
 }
 
+void funAuxDelJob(tListP *listaproc, char *opc){ 
+        tPosP p = firstp(*listaproc),q;
+        tItemP d;
+        while (p != NULL){   
+                funEstado(listaproc,p);
+                q=nextp(p,*listaproc); 
+                d = getItemp(p,*listaproc);
+                if(strcmp(opc,d.estado)==0)
+                        removeElementp(listaproc, p);
+                p=q;  
+        }
+}
+
 /**
  * Function: funDelJobs
  * ---------------------
- * Shows the process environment.
+ * Elimina os procesos de segundo
+ * plano según estado: terminado ou sinalado.
  *
  * @param listaprocesos process list.
  *                   
  * @return void.
  */
 void funDelJobs(tListP *listaprocesos){
-        tPosP p = firstp(*listaprocesos);
-        tItemP d ;
+
+        char * estado;
+        
         if(numtrozos>1) {
-        while (p!=NULL){
-                funEstado(listaprocesos,p);
-                d = getItemp(p,*listaprocesos);
-                if( strcmp(trozos[1],"-term") == 0 && strcmp(d.estado,"TERMINADO")==0)
-                        removeElementp(listaprocesos,p);
-                else if( strcmp(trozos[1],"-sig") == 0 && strcmp(d.estado, "SENALADO")==0)
-                        removeElementp(listaprocesos,p);
-                else
-                        removeElementp(listaprocesos,p);
-                p = nextp(p,*listaprocesos);
-        }
+                
+                if(strcmp(trozos[1],"-term") == 0)
+                        estado = "TERMINADO";
+                else if(strcmp(trozos[1],"-sig") == 0)
+                        estado = "SENALADO";
+                else{
+                        estado = "-";
+                        funListJobs(listaprocesos);
+
+                } 
+
+                if(strcmp(estado,"-")!=0)
+                        funAuxDelJob(listaprocesos, estado);
+
         }else{
                 if (!isEmptyListp(*listaprocesos))
                         funListJobs(listaprocesos);
@@ -2344,7 +2360,6 @@ void funAuxExec(tListP *L, int flagSegundo, int p){
 
         //prioridade do proceso
         int pri;
-        printf("%d",p);
         if(p<(-20))
                 pri = getpriority(PRIO_PROCESS,pid);
         else

@@ -8,7 +8,7 @@ make: *** No rule to make target 'all'.  Stop.
 # This is free software: you are free to change and redistribute it.
 # There is NO WARRANTY, to the extent permitted by law.
 
-# Make data base, printed on Thu Dec 15 10:40:33 2022
+# Make data base, printed on Thu Dec 15 16:57:54 2022
 
 # Variables
 
@@ -99,7 +99,7 @@ SNAP_REEXEC =
 # automatic
 @F = $(notdir $@)
 # environment
-VSCODE_PID = 5151
+VSCODE_PID = 30798
 # environment
 XDG_SESSION_TYPE = wayland
 # automatic
@@ -213,7 +213,7 @@ MANAGERPID = 2032
 # environment
 LC_MEASUREMENT = gl_ES.UTF-8
 # environment
-GIO_LAUNCHED_DESKTOP_FILE_PID = 5103
+GIO_LAUNCHED_DESKTOP_FILE_PID = 30751
 # environment
 _ = /snap/code/113/usr/share/code/code
 # environment
@@ -279,9 +279,10 @@ SNAP_LIBRARY_PATH = /var/lib/snapd/lib/gl:/var/lib/snapd/lib/gl32:/var/lib/snapd
 
 # Directories
 
-# . (device 66309, inode 7216961): 22 files, no impossibilities.
+ 
+# . (device 66309, inode 7216961): 25 files, no impossibilities.
 
-# 22 files, no impossibilities in 1 directories.
+# 25 files, no impossibilities in 1 directories.
 
 # Implicit Rules
 
@@ -295,7 +296,6 @@ lenv.h:
 #  Modification time never checked.
 #  File has not been updated.
 
- 
 historial.o: historial.h historial.c
 #  Implicit rule search has not been done.
 #  Modification time never checked.
@@ -429,12 +429,12 @@ lenv.c:
 
 # No general ('VPATH' variable) search path.
 
-# strcache buffers: 1 (0) / strings = 29 / storage = 225 B / avg = 7 B
-# current buf: size = 8162 B / used = 225 B / count = 29 / avg = 7 B
+# strcache buffers: 1 (0) / strings = 31 / storage = 240 B / avg = 7 B
+# current buf: size = 8162 B / used = 240 B / count = 31 / avg = 7 B
 
-# strcache performance: lookups = 60 / hit rate = 51%
+# strcache performance: lookups = 63 / hit rate = 50%
 # hash-table stats:
-# Load=29/8192=0%, Rehash=0, Collisions=0/60=0%
-# Finished Make data base on Thu Dec 15 10:40:33 2022
+# Load=31/8192=0%, Rehash=0, Collisions=0/63=0%
+# Finished Make data base on Thu Dec 15 16:57:55 2022
 
  
