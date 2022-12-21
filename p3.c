@@ -227,7 +227,7 @@ void funAyuda(){
                                 break;
                         }
                         
-                        if (i >= 25){
+                        if (i >= 32){
                                  flagatopar = 1; 
                                  break;
                         }
@@ -242,6 +242,7 @@ void funAyuda(){
                 printf("6.infosis\n7.fin\n8.salir\n9.bye\n10.ayuda\n");
                 printf("11.create\n12.stat\n13.list\n14.delete\n15.deltree\n");
                 printf("16.allocate\n17.deallocate\n18.i-o, i/o, e-s, e/s\n19.memdump\n20.memfill\n21.memory\n22.recurse\n");
+                printf("23.priotity\n24.showenv\n25.showvar\n26.fork\n27.execute\n28.listjobs\n29.job\n30.deletejobs\n");
         } 
 }
 
@@ -1797,7 +1798,7 @@ char * Ejecutable (char *s){
 }
 
 /**
- * Function: OurExecpv
+ * Function: OurExecpve
  * ----------------------
  * 
  *
@@ -2349,7 +2350,7 @@ char* funAuxGetUser(uid_t u){
 	return p->pw_name;
 }
 
-void funAuxExec(tListP *L, int flagSegundo, int p){ 
+void funAuxExec(tListP *L, int flagSegundo, int p, char *varenv[MAXPATHLEN], int prog){ 
         tItemP d;       
         int i = 0;
 
@@ -2382,7 +2383,7 @@ void funAuxExec(tListP *L, int flagSegundo, int p){
                 perror("Error de data");
 
         if(pid==0){
-                if (execvp(trozos[0],&trozos[0]) == -1)                {
+                if (OurExecvpe(trozos[prog],&trozos[prog],varenv) == -1)                {
                         fprintf(stderr, "No se puede ejecutar el comando:%s\n", strerror(errno));
                 }
                 exit(255);// por se falla o execvp   
@@ -2415,9 +2416,9 @@ void funAuxExec(tListP *L, int flagSegundo, int p){
  * @return void.
  */
 void otrosComandos(tListP *listaProcesos){
-        int pri,i,s,j, flagpri=0;
+        int pri,i,s,j,k=0, flagpri=0;
         char *priori;
-
+        char *varenv[MAXPATHLEN];
         for(i = 0; i<numtrozos; i++){             
                 if(trozos[i][0]=='@'){
                 flagpri=1; // para saber se o usuario quere establecer prioridade 
@@ -2429,13 +2430,17 @@ void otrosComandos(tListP *listaProcesos){
                 break; 
                 }  
         }
+        while ( trozos[k]!=NULL && getenv(trozos[k])!=NULL){
+                varenv[k-1]=trozos[k];
+                k++;
+        }
         if(!flagpri)
                 pri=-21;
         if(strcmp(trozos[numtrozos - 1], "&") == 0){
                 trozos[--numtrozos] = NULL;
-                funAuxExec(listaProcesos, 1, pri);
+                funAuxExec(listaProcesos, 1, pri, varenv, k);
         }else
-                funAuxExec(listaProcesos, 0, pri);
+                funAuxExec(listaProcesos, 0, pri, varenv, k);
 }
 
 
