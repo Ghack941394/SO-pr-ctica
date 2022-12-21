@@ -2370,10 +2370,10 @@ void funAuxExec(tListP *L, int flagSegundo, int p, char *varenv[MAXPATHLEN], int
         //comando con opcións
         char comando[MAXPATHLEN];
         while (i<numtrozos){
-                strcpy(comando,trozos[i]);  
+                strcat(comando,trozos[i]); 
+                strcat(comando, " "); 
                 i++;
         }
-        printf("%s", comando);
         //tempo de creación
         time_t data;
         time(&data);
