@@ -1915,7 +1915,6 @@ void funPriority(){
 
         if (numtrozos>=3){
                 valor = atoi(trozos[2]);
-                printf (" o pid que colle %d", p);
                 if(setpriority(PRIO_PROCESS, p, valor)!=0) //cambio a prioridade, devolve -1 se da erro
                         perror("Imposible cambiar la prioridad del proceso:");
         }
