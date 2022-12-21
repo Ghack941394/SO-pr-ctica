@@ -2374,7 +2374,7 @@ void funAuxExec(tListP *L, int flagSegundo, int p, char *varenv[MAXPATHLEN], int
                 strcpy(comando,trozos[i]);  
                 i++;
         }
-
+        printf("%s", comando);
         //tempo de creación
         time_t data;
         time(&data);
@@ -2382,10 +2382,15 @@ void funAuxExec(tListP *L, int flagSegundo, int p, char *varenv[MAXPATHLEN], int
         if((dat = localtime(&data))==NULL)
                 perror("Error de data");
 
+        
         if(pid==0){
-                if (OurExecvpe(trozos[prog],&trozos[prog],varenv) == -1)                {
-                        fprintf(stderr, "No se puede ejecutar el comando:%s\n", strerror(errno));
-                }
+                if(prog==0){//se k é igual a 1 significa que o usuario non escribiu variables de entorno, enton collo environ
+                if(OurExecvpe(trozos[prog],&trozos[prog],environ)==-1)
+                perror("Imposible ejecutar");
+        }else{
+                if(OurExecvpe(trozos[prog],&trozos[prog],varenv)==-1)
+                perror("Imposible ejecutar");
+        }
                 exit(255);// por se falla o execvp   
         }else{  
                 if(pid==-1){
@@ -2417,15 +2422,17 @@ void funAuxExec(tListP *L, int flagSegundo, int p, char *varenv[MAXPATHLEN], int
  */
 void otrosComandos(tListP *listaProcesos){
         int pri,i,s,j,k=0, flagpri=0;
-        char *priori;
+        char priori[MAXPATHLEN];
         char *varenv[MAXPATHLEN];
-        for(i = 0; i<numtrozos; i++){             
+        for(i = 0; i<numtrozos; i++){ 
+                           
                 if(trozos[i][0]=='@'){
                 flagpri=1; // para saber se o usuario quere establecer prioridade 
                 s = strlen(trozos[i]);
                 for (j = 1; j < s; j++){
                         priori[j-1]=trozos[i][j];
                 }
+
                 pri = atoi(priori); 
                 break; 
                 }  
